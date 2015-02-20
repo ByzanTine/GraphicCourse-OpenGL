@@ -74,7 +74,7 @@ init(void)
   ends[1][1] = (int)(0.25*height);
 
   /* Task 1: set the global variable "mode" to the OpenGL drawing mode to draw points */
-  mode = NULL;
+  mode = GL_POINTS;
 
   return;
 }
@@ -94,18 +94,51 @@ display(void)
      then draw a line between them.  The global variable "mode"
      specifies whether to draw points or lines.  It is set in init()
      and toggled in kbd(). */
-  
+  glColor3f(1, 0, 0);
+  glBegin(mode);
+    glVertex2i(ends[0][0], ends[0][1]);
+    glVertex2i(ends[1][0], ends[1][1]);
+  glEnd(); 
+  // glColor3f(1, 0, 0);
   /* Task 4: draw a red square of width 2*ENDHWIDTH pixels
      around each ends[] to highlight the end points. */
   /* set the squares' color to red */
   /* form quadrilaterals around each ends[]
      - each quad takes a group of 4 points */
-  
+  glBegin(GL_QUADS);
+    glVertex2i(ends[0][0] - ENDHWIDTH, ends[0][1] - ENDHWIDTH);
+    glVertex2i(ends[0][0] + ENDHWIDTH, ends[0][1] - ENDHWIDTH);
+    glVertex2i(ends[0][0] + ENDHWIDTH, ends[0][1] + ENDHWIDTH);
+    glVertex2i(ends[0][0] - ENDHWIDTH, ends[0][1] + ENDHWIDTH);
+  glEnd(); 
+
+  glBegin(GL_QUADS);
+    glVertex2i(ends[1][0] - ENDHWIDTH, ends[1][1] - ENDHWIDTH);
+    glVertex2i(ends[1][0] + ENDHWIDTH, ends[1][1] - ENDHWIDTH);
+    glVertex2i(ends[1][0] + ENDHWIDTH, ends[1][1] + ENDHWIDTH);
+    glVertex2i(ends[1][0] - ENDHWIDTH, ends[1][1] + ENDHWIDTH);
+  glEnd(); 
   /* Task 5: draw a green line on the x- and y-axes */
-  
+  // x-axes
+  glColor3f(0, 1, 0);
+  glBegin(GL_LINES);
+    glVertex2f(offset, 0);
+    glVertex2f(width + offset, 0);
+    glVertex2f(0, offset);
+    glVertex2f(0, height + offset);
+  glEnd(); 
   /* Task 8: draw a 10x10 blue filled square around the Origin, *
    *         use glPushAttrib() and glPopAttrib().              */
-  
+  glColor3f(0.0,0.0,1.0);
+  glPushAttrib(GL_POLYGON_BIT);
+  glPolygonMode(GL_FRONT,GL_FILL);
+  glBegin(GL_QUADS);
+    glVertex2i(-ENDHWIDTH,-ENDHWIDTH);
+    glVertex2i(ENDHWIDTH,-ENDHWIDTH);
+    glVertex2i(ENDHWIDTH,ENDHWIDTH);
+    glVertex2i(-ENDHWIDTH,ENDHWIDTH);
+  glEnd();
+  glPopAttrib();
   /* force drawing to start */
   glFlush();
 
@@ -186,6 +219,7 @@ kbd(unsigned char key, int x, int y)
     break;
   case '3':
     /* Task 3: set line thickness to 3 pixels (default 1) */
+    glLineWidth(3);
     break;
   case 'a':
     drift = drift ? 0 : 1;
@@ -193,13 +227,16 @@ kbd(unsigned char key, int x, int y)
   case 'b':   /* Task 7: draw outline squares at both end points */
     /* Draw only the boundary/edges of the end squares: set front
      * facing polygon to draw only line, no fill, use glPolygonMode(). */
+    glPolygonMode(GL_FRONT, GL_LINE);
     break;
   case 'l':
     /* Task 2: draw a line */
     /* Set the global variable "mode" to the OpenGL draw mode to draw a line */
+    mode = GL_LINES;
     break;
   case 'p':
     /* Task 1: Set the global variable "mode" to the OpenGL draw mode to draw points */
+    mode = GL_POINTS;
     break;
   default:
     break;
@@ -306,16 +343,16 @@ main(int argc, char *argv[])
 
   /* Task 6: register the provided refresh() 
      function to call when system is idle */
-  
+  glutIdleFunc(refresh);
   /* register keyboard event processing function */
   glutKeyboardFunc(kbd);
 
   /* Task 9: register cursor moved event callback */
-
+  glutPassiveMotionFunc(cursor);
   /* Task 10: register mouse clicked event callback */
-
+  glutMouseFunc(mouse);
   /* Task 11: register mouse dragged event callback */  
-
+  glutMotionFunc(drag);
   /* Set up initial OpenGL context */
   /* clear color buffer to white */
   glClearColor(1.0, 1.0, 1.0, 0.0);
