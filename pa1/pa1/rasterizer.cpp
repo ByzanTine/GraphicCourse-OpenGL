@@ -23,6 +23,7 @@
 #include <math.h>
 #include <iostream>
 #include <stdio.h>
+#include <algorithm>
 using namespace std;
 
 #ifdef __APPLE__
@@ -39,7 +40,7 @@ void
 drawPoint(XVec2f &point, XVec4f &pointColor, XVec4f &clipView, bool swapped, bool mirrored, int centerX) {
   int x = point(0);
   int y = point(1);
-  fprintf(stderr, "Draw Point Raw coordinates: %d, %d\n", x, y);
+  // fprintf(stderr, "Draw Point Raw coordinates: %d, %d\n", x, y);
   if (swapped)
     swap(x, y);
   if (mirrored) {
@@ -47,7 +48,7 @@ drawPoint(XVec2f &point, XVec4f &pointColor, XVec4f &clipView, bool swapped, boo
   }
   XVec2f drawPlace(x, y);
   drawPoint(drawPlace, pointColor, clipView);
-  fprintf(stderr, "Draw Point: %d, %d\n", x, y);
+  // fprintf(stderr, "Draw Point: %d, %d\n", x, y);
   return;
 }
 
@@ -89,7 +90,7 @@ fmid(int vertex[2][2], float x, float y) {
 // return code 1 outside
 // return code 2 need clipping
 int Line::
-Cohen_Sutherland_Preprocess(XVec4f &clipWin) {
+Cohen_Sutherland_Preprocess(const XVec4f &clipWin) {
   // first few bytes 
   int point0 = 0;
   int point1 = 0;
@@ -125,6 +126,84 @@ Cohen_Sutherland_Preprocess(XVec4f &clipWin) {
 
 
 }
+
+// return code 1 outside
+int Line::
+Cyrus_Beck_Preprocess(const XVec4f &clipWin, int vertex[2][2], float& maxPE, float& minPL) {
+  // store the clipped point in vertex
+  XVec2f normals[4];
+  normals[0] = XVec2f(0,1);
+  normals[1] = XVec2f(0,-1);
+  normals[2] = XVec2f(-1,0);
+  normals[3] = XVec2f(1,0);
+
+  // determine PE PL
+  XVec2f u(vertex[1][0] - vertex[0][0], vertex[1][1] - vertex[0][1]); // line vector
+  XVec2f point0(vertex[0][0] + 0.5, vertex[0][1] + 0.5);
+  //XVec2f point1(vertex[1][0], vertex[1][1]);
+  XVec2f clipWinLowerLeft(clipWin(0), clipWin(1));
+  XVec2f clipWinUpperRight = clipWinLowerLeft + XVec2f(clipWin(2), clipWin(3));
+
+  float PE[2] = {0.0f, 0.0f};
+  float PL[2] = {1.0f, 1.0f};
+  // if (u.x() == 0 || u.y() == 0)
+  //   return 0;
+  // if (u.x() > 0) {
+  //   PE[0] = -normals[2].dot(point0 - clipWinLowerLeft) / normals[2].dot(u);
+  //   PL[0] = -normals[3].dot(point0 - clipWinUpperRight) / normals[3].dot(u);
+  // }
+
+  // if (u.x() < 0) {
+  //   PL[0] = -normals[2].dot(point0 - clipWinLowerLeft) / normals[2].dot(u);
+  //   PE[0] = -normals[3].dot(point0 - clipWinUpperRight) / normals[3].dot(u);
+  // }
+
+  // if (u.y() > 0) {
+  //   PL[1] = -normals[0].dot(point0 - clipWinUpperRight) / normals[0].dot(u);
+  //   PE[1] = -normals[1].dot(point0 - clipWinLowerLeft) / normals[1].dot(u);
+  // }
+
+  // if (u.y() < 0) {
+  //   PE[1] = -normals[0].dot(point0 - clipWinUpperRight) / normals[0].dot(u);
+  //   PL[1] = -normals[1].dot(point0 - clipWinLowerLeft) / normals[1].dot(u);
+  // }
+  for (int i = 0; i < 4; ++i)
+  {
+    float dotProduct = u.dot(normals[i]);
+    if (dotProduct == 0) 
+      continue;
+    float ratio;
+
+    if(i == 0 || i == 3)
+      ratio = normals[i].dot(clipWinUpperRight - point0)/dotProduct;
+    else
+      ratio = normals[i].dot(clipWinLowerLeft - point0)/dotProduct;
+      
+    if(dotProduct < 0)
+      PE[i/2] = ratio;
+    else
+      PL[i/2] = ratio;
+  }
+
+  maxPE = max(PE[0], PE[1]);
+  minPL = min(PL[0], PL[1]);
+  if (minPL < maxPE) {
+    return 1;
+  }
+
+  // record onto points
+  maxPE = max(0.0f, maxPE);
+  minPL = min(1.0f, minPL);
+  fprintf(stderr, "maxPE: %f, minP:: %f\n", maxPE, minPL);
+  // XVec2f newVertex0 = vertex0 + (vertex1 - vertex0) * maxPE;
+  // XVec2f newVertex1 = vertex0 + (vertex1 - vertex0) * minPL;
+  // vertex[0][0] = newVertex0.x();
+  // vertex[0][1] = newVertex0.y();
+  // vertex[1][0] = newVertex1.x();
+  // vertex[1][1] = newVertex1.y();
+
+  return 0;
+}
 /*
  * Line::drawInRect(XVec4f &clipWin)
  * Pre: assumes all class members have been initialized with valid values.
@@ -142,14 +221,24 @@ drawInRect(XVec4f &clipWin)
 
   if (clipped == 1) 
     return;
+
   int vertex[2][2];
   vertex[0][0] = vertex0.x();
   vertex[0][1] = vertex0.y();
   vertex[1][0] = vertex1.x();
   vertex[1][1] = vertex1.y();
-
   fprintf(stderr, "vertex info: vertex0: %d, %d, vertex1: %d, %d\n", vertex[0][0], vertex[0][1], vertex[1][0], vertex[1][1]);
-    // resolve the going toward smaller x
+  
+  
+  float maxPE = 0.0f, minPL = 1.0f;
+  if (clipped == 2) {
+    if(Cyrus_Beck_Preprocess(clipWin, vertex, maxPE, minPL)) {
+      return;
+    }
+
+  }
+  fprintf(stderr, "vertex info After Cyrus_Beck_Preprocess: vertex0: %d, %d, vertex1: %d, %d\n", vertex[0][0], vertex[0][1], vertex[1][0], vertex[1][1]);
+
    
   bool swapped = false;
   int center[2];
@@ -178,8 +267,13 @@ drawInRect(XVec4f &clipWin)
   // no change on slope
   bool exchanged = false;
   if (vertex[0][0] > vertex[1][0]) {
+    fprintf(stderr, "exchanged!\n");
     exchanged = true;
     swap(vertex[0], vertex[1]);
+    // do something with PE PL as well
+    float tmp = minPL;
+    minPL = 1.0f - maxPE;
+    maxPE = 1.0f -tmp;
   }
   // swap x y
   
@@ -192,9 +286,17 @@ drawInRect(XVec4f &clipWin)
   fprintf(stderr, "After preprocessing vertex info: vertex0: %d, %d, vertex1: %d, %d\n", vertex[0][0], vertex[0][1], vertex[1][0], vertex[1][1]);
   
   fprintf(stderr, "final slope: %f\n", (float)(vertex[1][1] - vertex[0][1]) / (float)(vertex[1][0] - vertex[0][0]));
-  int x0 = vertex[0][0];
-  int x1 = vertex[1][0];
-  int y0 = vertex[0][1];  
+
+  int clippedEndPoints[2][2];
+
+  clippedEndPoints[0][0] = (vertex[0][0] + (vertex[1][0] - vertex[0][0]) * maxPE);
+  clippedEndPoints[0][1] = (vertex[0][1] + (vertex[1][1] - vertex[0][1]) * maxPE);
+  clippedEndPoints[1][0] = (vertex[0][0] + (vertex[1][0] - vertex[0][0]) * minPL);
+  clippedEndPoints[1][1] = (vertex[0][1] + (vertex[1][1] - vertex[0][1]) * minPL);
+
+  int x0 = clippedEndPoints[0][0];
+  int x1 = clippedEndPoints[1][0];
+  int y0 = clippedEndPoints[0][1];  
   // int y1 = vertex[1][1]; 
   int y = y0;
   int dx = vertex[1][0] - vertex[0][0];
@@ -207,14 +309,15 @@ drawInRect(XVec4f &clipWin)
 
     if (exchanged) {
       
-      XVec4f drawColor = color0 * (float)(x - x0)/(float)(x1 - x0) + color1 * (float)(x1 - x)/(float)(x1 - x0);
+      XVec4f drawColor = color0 * (float)(x - vertex[0][0])/(float) dx + 
+                         color1 * (float)(vertex[1][0] - x)/(float) dx;
       drawPoint(drawPlace, drawColor, clipWin, swapped, mirrored, center[0]);
     }
     else {
-      XVec4f drawColor = color0 * (float)(x1 - x)/(float)(x1 - x0) + color1 * (float)(x - x0)/(float)(x1 - x0);
+      XVec4f drawColor = color0 * (float)(vertex[1][0]  - x)/(float)dx + color1 * (float)(x - vertex[0][0] )/(float)dx;
       drawPoint(drawPlace, drawColor, clipWin, swapped, mirrored, center[0]);
     }
-    fprintf(stderr, "fid: %f\n", l_fmid);
+    // fprintf(stderr, "fid: %f\n", l_fmid);
     
     if (l_fmid < 0) {
      y++;

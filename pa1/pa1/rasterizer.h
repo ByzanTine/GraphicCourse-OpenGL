@@ -40,7 +40,8 @@ class Line {
   bool isAntialiased;
  private:
   float fmid(int vertex[2][2], float x, float y);
-  int Cohen_Sutherland_Preprocess(XVec4f &clipWin);
+  int   Cohen_Sutherland_Preprocess(const XVec4f &clipWin);
+  int  Cyrus_Beck_Preprocess(const XVec4f &clipWin, int vertex[2][2], float& maxPE, float& minPL);
 };
 
 class Triangle:public Line {    
