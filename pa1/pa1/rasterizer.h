@@ -39,7 +39,8 @@ class Line {
   XVec4f color0, color1;
   bool isAntialiased;
  private:
-  virtual float fmid(int vertex[2][2], float x, float y);
+  float fmid(int vertex[2][2], float x, float y);
+  int Cohen_Sutherland_Preprocess(XVec4f &clipWin);
 };
 
 class Triangle:public Line {    

@@ -85,6 +85,46 @@ fmid(int vertex[2][2], float x, float y) {
 }
 //=========================
 
+// return code 0 inside,
+// return code 1 outside
+// return code 2 need clipping
+int Line::
+Cohen_Sutherland_Preprocess(XVec4f &clipWin) {
+  // first few bytes 
+  int point0 = 0;
+  int point1 = 0;
+
+  if (vertex0.x()  < clipWin(0))
+    point0 += 1;
+  else if (vertex0.x() > clipWin(0) + clipWin(2))
+    point0 += (1 << 1);
+
+  if (vertex0.y() < clipWin(1))
+    point0 += (1 << 2);
+  else if (vertex0.y() > clipWin(1) + clipWin(3))
+    point0 += (1 << 3);
+
+  // TODO duplicate anyway
+  if (vertex1.x()  < clipWin(0))
+    point1 += 1;
+  else if (vertex1.x() > clipWin(0) + clipWin(2))
+    point1 += (1 << 1);
+
+  if (vertex1.y() < clipWin(1))
+    point1 += (1 << 2);
+  else if (vertex1.y() > clipWin(1) + clipWin(3))
+    point1 += (1 << 3);
+  fprintf(stderr, "clipWin: %f, %f, %f, %f\n", clipWin(0), clipWin(1), clipWin(2), clipWin(3));
+  fprintf(stderr, "point0: %d, point1: %d\n", point0, point1);
+  if ((point0 | point1) == 0)
+    return 0;
+  if ((point0 & point1) != 0)
+    return 1;
+  else 
+    return 2;
+
+
+}
 /*
  * Line::drawInRect(XVec4f &clipWin)
  * Pre: assumes all class members have been initialized with valid values.
@@ -97,6 +137,11 @@ drawInRect(XVec4f &clipWin)
      colored color0 and color1 respectively. It should call drawPoint() 
      to set each pixel. For the third argument of drawPoint(), pass on 
      the variable clipWin. */
+  // do the preprocessing first
+  int clipped = Cohen_Sutherland_Preprocess(clipWin);
+
+  if (clipped == 1) 
+    return;
   int vertex[2][2];
   vertex[0][0] = vertex0.x();
   vertex[0][1] = vertex0.y();
@@ -106,7 +151,17 @@ drawInRect(XVec4f &clipWin)
   fprintf(stderr, "vertex info: vertex0: %d, %d, vertex1: %d, %d\n", vertex[0][0], vertex[0][1], vertex[1][0], vertex[1][1]);
     // resolve the going toward smaller x
    
+  bool swapped = false;
   int center[2];
+  if (vertex[1][0] - vertex[0][0] == 0) {
+      // m is infinity
+      fprintf(stderr, "swap x, y marked\n");
+      swapped = true;
+      swap(vertex[0][0], vertex[0][1]);
+      swap(vertex[1][0], vertex[1][1]);
+
+  }
+
   float m = (float)(vertex[1][1] - vertex[0][1]) / (float)(vertex[1][0] - vertex[0][0]);
   fprintf(stderr, "slope: %f\n", m);
   bool mirrored = false; // simply mirror according to x0
@@ -127,7 +182,7 @@ drawInRect(XVec4f &clipWin)
     swap(vertex[0], vertex[1]);
   }
   // swap x y
-  bool swapped = false;
+  
   if (m > 1) {
     fprintf(stderr, "swap x, y marked\n");
     swapped = true;
@@ -247,7 +302,7 @@ drawInRect(XVec4f &clipWin)
   bbox.ymin = 0;
   bbox.xmax = 500;
   bbox.ymax = 800;
-  fprintf(stderr, "DRAW Triangle\n");
+  // fprintf(stderr, "DRAW Triangle\n");
   for (int i = bbox.xmin; i < bbox.xmax; i++) {
     for (int j = bbox.ymin; j < bbox.ymax; j++) {
       // if ()

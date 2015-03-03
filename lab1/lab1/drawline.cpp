@@ -142,7 +142,21 @@ display(void)
     fprintf(stderr, "vertex info: vertex0: %d, %d, vertex1: %d, %d\n", vertex[0][0], vertex[0][1], vertex[1][0], vertex[1][1]);
     // resolve the going toward smaller x
    
+    bool exchanged = false;
+    bool swapped = false;
+
+
+
     int center[2];
+
+    if (vertex[1][0] - vertex[0][0] == 0) {
+      // m is infinity
+      fprintf(stderr, "swap x, y marked\n");
+      swapped = true;
+      swap(vertex[0][0], vertex[0][1]);
+      swap(vertex[1][0], vertex[1][1]);
+
+    }
     float m = (float)(vertex[1][1] - vertex[0][1]) / (float)(vertex[1][0] - vertex[0][0]);
     fprintf(stderr, "slope: %f\n", m);
     bool mirrored = false; // simply mirror according to x0
@@ -150,7 +164,7 @@ display(void)
       fprintf(stderr, "mirror x\n");
       mirrored = true;
       vertex[1][0] = (vertex[0][0] << 1) - vertex[1][0];
-      m = (float)(vertex[1][1] - vertex[0][1]) / (float)(vertex[1][0] - vertex[0][0]);
+      m *= -1;
       // record mirror center
       center[0] = vertex[0][0];
       center[1] = vertex[0][1];
@@ -158,13 +172,13 @@ display(void)
     }
     
     // no change on slope
-    bool exchanged = false;
+    
     if (vertex[0][0] > vertex[1][0]) {
       exchanged = true;
       swap(vertex[0], vertex[1]);
     }
     // swap x y
-    bool swapped = false;
+    
     if (m > 1) {
       fprintf(stderr, "swap x, y marked\n");
       swapped = true;
