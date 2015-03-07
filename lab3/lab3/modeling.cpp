@@ -40,6 +40,7 @@ int screen_w, screen_h;  /* window size in pixels */
 
 transform_t mode;               /* MAGNIFICATION, ROTATION, SHEAR, TRANSLATION */
 
+
 void
 setcam()
 {

@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <algorithm>
 
 #include "xvec.h"
 #include "objects.h"
@@ -111,10 +112,14 @@ transform()
    * in the current transformation matrix
    * to the cube.
   */
+
   for (int i = 0; i < 8; ++i)
   {
     vert[i] = CTM * vert[i];
   }
+
+  center = CTM * center;
+
   return;
 }
 
@@ -135,6 +140,21 @@ Cone(void)
    * the indices of vert[] forming a triangle fan for the base, and
    * cone[] those of a triangle fan forming the cone.
   */
+  vert[0] = XVec4f(0.0, -height/2, 0.0, 1.0);
+  base[0] = 0;
+
+  vert[1] = XVec4f(0.0,  height/2, 0.0, 1.0);
+  cone[0] = 1;
+
+  for (i = 0; i <= SLICES; ++i)
+  {
+    // base center plus circle approx
+    vert[i + 2] = vert[0];
+    vert[i + 2].x() = radius * cosf(i * radperslice);
+    vert[i + 2].z() = radius * sinf(i * radperslice);
+    base[i + 1] = i + 2;
+    cone[i + 1] = i + 2;
+  }
 
   return;
 }
@@ -150,7 +170,11 @@ draw(void)
    * with its vertices listed in base[].  Draw the cone itself as a
    * triangle fan with vertices listed in cone[].
   */
-  
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glVertexPointer(4, GL_FLOAT, 0, vert);
+  glDrawElements(GL_TRIANGLE_FAN, SLICES + 2, GL_UNSIGNED_INT, base);
+  glDrawElements(GL_TRIANGLE_FAN, SLICES + 2, GL_UNSIGNED_INT, cone);
+  glDisableClientState(GL_VERTEX_ARRAY);
   return;
 }
 
@@ -162,7 +186,11 @@ transform(void)
    * in the current transformation matrix
    * to the cone.
   */
-
+  for (int i = 0; i < SLICES + 3; ++i)
+  {
+    vert[i] = CTM * vert[i];
+  }
+  center = CTM * center;
   return;
 }
 
@@ -241,7 +269,14 @@ setupWorld(transform_t mode)
 
   return;
 }
-  
+
+void applyTransform() {
+  if (object == CUBE) 
+    cube.transform();
+  if (object == CONE)
+    cone.transform();
+
+} 
 void
 transformWorld(transform_t mode)
 {
@@ -250,7 +285,25 @@ transformWorld(transform_t mode)
    * do the modeling transform by calling the transform()
    * method of the objects.
    */
-  if (object == CUBE)
-    cube.transform();
+  // store CTM
+  if (mode != TRANSLATION) {
+    MatModView stack = CTM;
+    CTM.Identity();
+    if (object == CUBE)
+      CTM.translate(-cube.center.x(), -cube.center.y(), -cube.center.z());
+    if (object == CONE)
+      CTM.translate(-cone.center.x(), -cone.center.y(), -cone.center.z());
+    applyTransform();
+    std::swap(CTM, stack);
+    applyTransform();
+    std::swap(CTM, stack);
+    CTM(0,3) *= -1;
+    CTM(1,3) *= -1;
+    CTM(2,3) *= -1;
+    applyTransform();
+  }
+  else {
+    applyTransform();
+  }
   return;
 }
