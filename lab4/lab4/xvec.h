@@ -295,9 +295,9 @@ template<int dim, class real_type>
   XVec dehomogenize() {
     assert(dim == 4);
     if ((*this).w() == 0.0 || (*this).w() == 1.0) {
-      return(XVec3f((*this).x(), (*this).y(), (*this).z()));
+      return(XVec<4, float>((*this).x(), (*this).y(), (*this).z(), (*this).w()));
     } else {
-      return(XVec3f((*this).x()/(*this).w(), (*this).y()/(*this).w(), (*this).z()/(*this).w()));
+      return(XVec<4, float>((*this).x()/(*this).w(), (*this).y()/(*this).w(), (*this).z()/(*this).w(), 1));
     }
   }
   

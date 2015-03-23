@@ -210,7 +210,7 @@ transformWorld(transform_t mode)
   for (int i = 0; i < 5; ++i)
     pyramid[i] = CTM * pyramid0[i];
 
-
+  std::cerr << pyramid[0] << std::endl;
   if (mode == PERSPECTIVE) {
     /* YOUR CODE HERE 
      * Perspective projection: project all points onto 2D 
@@ -222,6 +222,27 @@ transformWorld(transform_t mode)
      *     (the call to glOrtho()).  Similarly fitting the cvv to ndc
      *     is done in transforms.cpp:reshape() (the call to glViewport()).
      */
+    XMat4f perspectiveMatrix;
+    perspectiveMatrix *= cam.zNear; // set first two row
+    XVec4f divideVec(0, 0, cam.zNear + cam.zFar, -cam.zNear * cam.zFar);
+    perspectiveMatrix.setRow(2, divideVec);
+    XVec4f homoVec(0, 0, 1, 0);
+    perspectiveMatrix.setRow(3, homoVec);
+    std::cerr << "pmat: " << perspectiveMatrix << std::endl;
+    for (int i = 0; i < 5; ++i)
+      for (int j = 0; j < 5; ++j)
+        for (int k = 0; k < 8; ++k) {
+          cube_array[i][j][k] = perspectiveMatrix * cube_array[i][j][k];
+          cube_array[i][j][k] = cube_array[i][j][k].dehomogenize();
+
+        }
+    for (int i = 0; i < 5; ++i) {
+      pyramid[i] = perspectiveMatrix * pyramid[i];
+      
+      pyramid[i] = pyramid[i].dehomogenize();
+      std::cerr << pyramid[i] << std::endl;
+    }
+   
   }
   
   return;

@@ -52,7 +52,7 @@ float fovy0;      // fovy
 void
 init_viewcam(transform_t mode)
 {
-  eye_pos0 = XVec4f(0.0, 0.0, 250, 1.0);  // {100, 50, 250, 1.0};
+  eye_pos0 = XVec4f(0.0, 0.0, 1000, 1.0);  // {100, 50, 250, 1.0};
   gaze_dir0 = XVec4f(0.0, 0.0, -1.0, 0.0); // along -z-axis
   top_dir0 = XVec4f(0.0, 1.0, 0.0, 0.0);
   zNear0 = -300.0; // z-coordinate of the near plane, negative number
@@ -119,7 +119,7 @@ reshape(int w, int h)
      * with the set up stored in Camera "cam".
     */
   } else {
-    glOrtho(-w/2.0, w/2.0, -h/2.0, h/2.0, -w, w);
+    glOrtho(-w/2.0, w/2.0, -h/2.0, h/2.0, -cam.zNear, -cam.zFar);
   }
 
   // viewport transformation to fit the CVV to NDC

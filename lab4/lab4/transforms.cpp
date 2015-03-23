@@ -85,7 +85,7 @@ dolly(float delta)
    * Work on this only after you've gotten
    * perspective projection up and running.
   */
-
+  e(2) += delta;
   return;
 }
 
@@ -174,12 +174,12 @@ movecam(unsigned char key, int x, int y)
   case 'w': // dolly forward
   case 'z': // dolly forward
     /* YOUR CODE HERE */
-    cam.pan(THETA);
+    cam.dolly(DELTA);
     break;
   case 's': // dolly backward
   case 'Z': // dolly backward
     /* YOUR CODE HERE */
-    cam.tilt(THETA);
+    cam.dolly(-DELTA);
     break;
   case 'd': // roll cw
     /* YOUR CODE HERE */
@@ -187,7 +187,7 @@ movecam(unsigned char key, int x, int y)
     break;
   case 'a': // roll ccw
     /* YOUR CODE HERE */
-    cam.roll(THETA);
+    cam.roll(-THETA);
     break;
   case MOUSE_DRAG:
     if (x) { // pan left or right, gaze follows mouse
@@ -249,11 +249,12 @@ setup_view(transform_t mode)
     XVec4f translationVector = -cam.e;
     XMat4f translationMatrix; // init as identity
     translationMatrix.setCol(3, translationVector);
-  
+    translationMatrix(3,3) = 1; // reset the last entry for correct homogeneus coord
     XMat4f rotationMatrix;
     rotationMatrix.setRow(0, cam.u);
     rotationMatrix.setRow(1, cam.v);
     rotationMatrix.setRow(2, cam.w);
+
     CTM = rotationMatrix * translationMatrix;
 
   }
