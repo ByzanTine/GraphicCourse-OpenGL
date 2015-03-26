@@ -118,6 +118,7 @@ reshape(int w, int h)
      * Set up perspective projection using gluPerspective()
      * with the set up stored in Camera "cam".
     */
+    gluPerspective(cam.fovy, (float)w/(float)h, -cam.zNear, -cam.zFar);
   } else {
     glOrtho(-w/2.0, w/2.0, -h/2.0, h/2.0, -cam.zNear, -cam.zFar);
   }

@@ -234,9 +234,9 @@ setup_view(transform_t mode)
      * Use gluLookAt() to set up the eye coordinate system 
      * with the set up stored in the Camera "cam"
     */
-    // gluLookAt(cam.e(0), cam.e(1), cam.e(2), 
-    //           cam.e(0) + cam.g(0), cam.e(1) + cam.g(1), cam.e(2) + cam.g(2),
-    //           cam.t(0), cam.t(1), cam.t(2));
+    gluLookAt(cam.e(0), cam.e(1), cam.e(2), 
+              cam.e(0) + cam.g(0), cam.e(1) + cam.g(1), cam.e(2) + cam.g(2),
+              cam.t(0), cam.t(1), cam.t(2));
   } else {
     /* YOUR CODE HERE
      * 1. Apply a translation to move world origin to eye position
