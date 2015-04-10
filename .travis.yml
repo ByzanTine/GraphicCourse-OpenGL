@@ -2,5 +2,8 @@ language: cpp
 compiler:
   - gcc
   - clang
+sudo: required
+before_install:
+  - sudo apt-get install freeglut3-dev
 # Change this to your needs
-script: ./configure && make
+script: ./configure 
