@@ -101,7 +101,7 @@ float objlight_specular[] = {0.0, 0.8, 0.0, 1.0 };
 float mat_diffuse[] = { 0.8, 0.5, 0.5, 1.0 };
 float mat_ambient[] = { 0.2, 0.2, 0.3, 1.0 };
 float mat_specular[] = { 0.7, 1.0, 1.0, 1.0 };
-//float mat_specular[] = { .7, 1.0, 4.0, 1.0 };
+// float mat_specular[] = { .7, 1.0, 4.0, 1.0 };
 float mat_shininess[] = { 50.0 };
 
 void
@@ -134,7 +134,10 @@ init_properties()
    * mat_diffuse, mat_ambient, mat_specular, mat_shininess).
    * You are welcome to experiment with different values for the settings.
    */
-
+  glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+  glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+  glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
   /* specularity computed taking into account eye location
    * as opposed to just assuming that view is parallel to z */
   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
@@ -170,9 +173,15 @@ init(void)
    * Initialize your lights: some needs to be positioned
    * before viewing transform, others after.
   */
+  glLightfv(EYELIGHT, GL_POSITION, eyelight_position);
+  glLightfv(EYELIGHT, GL_SPOT_DIRECTION, eyelight_spotdir);
+  glLightfv(OBJLIGHT, GL_POSITION, objlight_position);
   setup_view();           // in viewing.cpp
   /* . . . AND/OR HERE */
+  glLightfv(SUNLIGHT, GL_POSITION, sunlight_position);
+  // 
 
+  
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   /* YOUR CODE HERE - enable various other pieces of OpenGL state
@@ -182,6 +191,11 @@ init(void)
    * 4. Smooth shading of polygons (Cf. glShadeModel())
    * 5. Filled rendering of polygons (Cf. glPolygonMode())
   */
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_RESCALE_NORMAL);
+  glEnable(GL_CULL_FACE);
+  glShadeModel(GL_SMOOTH);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   glColor4f(0.0, 0.0, 1.0, 0.4);
   initWorld(); // TODO in objects.cpp
@@ -348,14 +362,16 @@ kbd(unsigned char key, int x, int y)
    * others only if the camera is moved, or some others may never need to be 
    * moved at all.
    */
+
   if (mode == MOVECAM) {
     setup_view();             // in viewing.cpp
     /* . . . AND/OR HERE . . . */
-
+    glLightfv(SUNLIGHT, GL_POSITION, sunlight_position);
+    
     glMultMatrixd(cmodview); // play back all modeling transforms
   }
   /* . . . AND/OR HERE */
-  
+  glLightfv(OBJLIGHT, GL_POSITION, objlight_position);
   if ((mod & GLUT_ACTIVE_ALT) | (mod & GLUT_ACTIVE_CTRL)) {
     mode = MOVECAM;
   }
@@ -379,7 +395,8 @@ motion(int x, int y)
     /* YOUR CODE HERE . . . 
      * Same as within movecam().
     */
-
+    glLightfv(SUNLIGHT, GL_POSITION, sunlight_position);
+    glLightfv(OBJLIGHT, GL_POSITION, objlight_position);
     glMultMatrixd(cmodview);  // play back all modeling transforms
 
     /* . . . AND/OR HERE */

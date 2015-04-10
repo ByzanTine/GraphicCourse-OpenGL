@@ -129,8 +129,8 @@ drawWorld(int w, int h)
      * you comment out the call to gluSphere and uncomment
      * the call to drawSphere before you turn in your lab.
     */
-    //gluSphere(q, sphere_radius, SLICES, STACKS);
-    drawSphere(sphere_radius);
+    gluSphere(q, sphere_radius, SLICES, STACKS);
+    // drawSphere(sphere_radius);
   }
   glTranslatef(-1.2, -0.5, 0.0);
   glRotatef(-90.0, 1.0, 0.0, 0.0);
