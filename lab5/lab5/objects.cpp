@@ -61,9 +61,14 @@ drawAxes(int w, int h, float alpha)
   return;
 }
 
-#define SLICES 1000  // longitude slices
-#define STACKS 1000  // latitude slices
+#define SLICES 20  // longitude slices
+#define STACKS 20  // latitude slices
+#include <vector>
+using namespace std;
+GLuint vbods[2];                 // variable to hold vbo descriptor(s)      
 
+XVec3f vert[STACKS + 1][SLICES + 1];
+unsigned int ids[2 * (STACKS + 1) * (SLICES + 1)];
 /*
  * Initialize the vertex buffer objects
  * containing the vertices and vertex attributes
@@ -84,7 +89,24 @@ initWorld()
    * length, i.e., normalized. You can either do manually or by
    * enabling an OpenGL mode (find it!).
    */
+  int ids_index = 0;
+  for (unsigned int stackNumber = 0; stackNumber <= STACKS; ++stackNumber)
+  {
+    float theta = stackNumber * M_PI / STACKS;
+    float cosTheta = cos(theta);
+    float sinTheta = sin(theta);
+    for (unsigned int sliceNumber = 0; sliceNumber <= SLICES; ++sliceNumber)
+    {
+        
+        float phi = sliceNumber * 2 * M_PI / SLICES;
+        float sinPhi = sin(phi);
+        float cosPhi = cos(phi);
+        vert[stackNumber][sliceNumber] = XVec3f(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
+        ids[ids_index++] = (stackNumber * SLICES) + (sliceNumber % SLICES);
+        ids[ids_index++] = (stackNumber + 1) * SLICES + (sliceNumber % SLICES);
 
+    }
+  }
   return;
 }
   
@@ -104,7 +126,26 @@ drawSphere(double radius)
    * terms of element count, or your GPU will lock
    * up and you'd have to reboot your machine.
   */
+  static float old_radius = 1.0f;
+  for (unsigned int stackNumber = 0; stackNumber <= STACKS; ++stackNumber)
+  {
 
+    for (unsigned int sliceNumber = 0; sliceNumber <= SLICES; ++sliceNumber)
+    {
+        vert[stackNumber][sliceNumber] *= radius/old_radius;
+
+    }
+  }
+  old_radius = radius;
+  
+  glEnableClientState(GL_VERTEX_ARRAY);
+    
+  glVertexPointer(3, GL_FLOAT, 0, &vert[0]);
+    
+  glDrawElements(GL_TRIANGLE_FAN, sizeof(ids)/sizeof(unsigned int), GL_UNSIGNED_INT, &ids[0]);
+
+
+  glDisableClientState(GL_VERTEX_ARRAY);
   return;
 }
 
