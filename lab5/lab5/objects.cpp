@@ -61,14 +61,15 @@ drawAxes(int w, int h, float alpha)
   return;
 }
 
-#define SLICES 20  // longitude slices
-#define STACKS 20  // latitude slices
-#include <vector>
+#define SLICES 1000  // longitude slices
+#define STACKS 1000  // latitude slices
+#include <stdio.h>
 using namespace std;
 GLuint vbods[2];                 // variable to hold vbo descriptor(s)      
 
-XVec3f vert[STACKS + 1][SLICES + 1];
-unsigned int ids[2 * (STACKS + 1) * (SLICES + 1)];
+XVec3f vert[STACKS + 1][SLICES];
+XVec3f normals[STACKS + 1][SLICES];
+unsigned int ids[STACKS  * (2 * SLICES + 2)];
 /*
  * Initialize the vertex buffer objects
  * containing the vertices and vertex attributes
@@ -90,23 +91,40 @@ initWorld()
    * enabling an OpenGL mode (find it!).
    */
   int ids_index = 0;
-  for (unsigned int stackNumber = 0; stackNumber <= STACKS; ++stackNumber)
+  for (unsigned int stackNumber = 0; stackNumber < STACKS; ++stackNumber)
   {
     float theta = stackNumber * M_PI / STACKS;
     float cosTheta = cos(theta);
     float sinTheta = sin(theta);
-    for (unsigned int sliceNumber = 0; sliceNumber <= SLICES; ++sliceNumber)
+    for (int sliceNumber = SLICES - 1; sliceNumber >= 0; --sliceNumber)
     {
         
         float phi = sliceNumber * 2 * M_PI / SLICES;
         float sinPhi = sin(phi);
         float cosPhi = cos(phi);
-        vert[stackNumber][sliceNumber] = XVec3f(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
-        ids[ids_index++] = (stackNumber * SLICES) + (sliceNumber % SLICES);
-        ids[ids_index++] = (stackNumber + 1) * SLICES + (sliceNumber % SLICES);
+        vert[stackNumber][sliceNumber] = XVec3f(sinPhi * sinTheta, cosPhi * sinTheta, cosTheta);
+        normals[stackNumber][sliceNumber] = XVec3f(sinPhi * sinTheta, cosPhi * sinTheta, cosTheta);
+        // normals[stackNumber][sliceNumber] = XVec3f(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
+        ids[ids_index++] = stackNumber * (SLICES) + (sliceNumber % SLICES);
+        ids[ids_index++] = (stackNumber + 1) * (SLICES) + (sliceNumber % SLICES);
 
     }
+    // ids[ids_index++] = stackNumber * SLICES;
+
   }
+  float theta = M_PI;
+  float cosTheta = cos(theta);
+  float sinTheta = sin(theta);
+  for (unsigned int sliceNumber = 0; sliceNumber < SLICES; ++sliceNumber)
+  {
+      
+      float phi = sliceNumber * 2 * M_PI / SLICES;
+      float sinPhi = sin(phi);
+      float cosPhi = cos(phi);
+      vert[STACKS][sliceNumber] = XVec3f(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
+      normals[STACKS][sliceNumber] = XVec3f(sinPhi * sinTheta, cosPhi * sinTheta, cosTheta);
+  }
+
   return;
 }
   
@@ -136,14 +154,18 @@ drawSphere(double radius)
 
     }
   }
+  
   old_radius = radius;
   
   glEnableClientState(GL_VERTEX_ARRAY);
     
   glVertexPointer(3, GL_FLOAT, 0, &vert[0]);
-    
-  glDrawElements(GL_TRIANGLE_FAN, sizeof(ids)/sizeof(unsigned int), GL_UNSIGNED_INT, &ids[0]);
+  glEnableClientState(GL_NORMAL_ARRAY);
+  glNormalPointer(GL_FLOAT, 0, &normals[0]);
 
+  glDrawElements(GL_TRIANGLE_STRIP, sizeof(ids)/sizeof(unsigned int), GL_UNSIGNED_INT, &ids[0]);
+  
+  glEnd();
 
   glDisableClientState(GL_VERTEX_ARRAY);
   return;
@@ -170,8 +192,8 @@ drawWorld(int w, int h)
      * you comment out the call to gluSphere and uncomment
      * the call to drawSphere before you turn in your lab.
     */
-    gluSphere(q, sphere_radius, SLICES, STACKS);
-    // drawSphere(sphere_radius);
+    // gluSphere(q, sphere_radius, SLICES, STACKS);
+    drawSphere(sphere_radius);
   }
   glTranslatef(-1.2, -0.5, 0.0);
   glRotatef(-90.0, 1.0, 0.0, 0.0);
