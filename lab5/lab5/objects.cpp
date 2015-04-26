@@ -63,9 +63,9 @@ drawAxes(int w, int h, float alpha)
 
 #define SLICES 1000  // longitude slices
 #define STACKS 1000  // latitude slices
-#include <stdio.h>
-using namespace std;
-GLuint vbods[2];                 // variable to hold vbo descriptor(s)      
+
+
+   
 
 XVec3f vert[STACKS + 1][SLICES];
 XVec3f normals[STACKS + 1][SLICES];
@@ -156,18 +156,40 @@ drawSphere(double radius)
   }
   
   old_radius = radius;
+
+
+
+
+  glGenBuffers(2, bods); 
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bods[SIDX]); // create a new buffer object, of type
+                              // GL_ARRAY_BUFFER, attach it to vbos and make
+                              // it the current buffer object
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+               sizeof(ids),
+               ids, GL_STATIC_DRAW);
+                            
+  // glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert), sizeof(ids), ids);
+  // glBufferSubData(GL_ARRAY_BUFFER, sizeof(vert) + sizeof(ids), sizeof(normals), normals);
   
   glEnableClientState(GL_VERTEX_ARRAY);
-    
-  glVertexPointer(3, GL_FLOAT, 0, &vert[0]);
   glEnableClientState(GL_NORMAL_ARRAY);
-  glNormalPointer(GL_FLOAT, 0, &normals[0]);
-
-  glDrawElements(GL_TRIANGLE_STRIP, sizeof(ids)/sizeof(unsigned int), GL_UNSIGNED_INT, &ids[0]);
   
-  glEnd();
+  
 
-  glDisableClientState(GL_VERTEX_ARRAY);
+  glBindBuffer(GL_ARRAY_BUFFER, bods[0]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vert) + sizeof(normals), NULL, GL_STATIC_DRAW);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vert), vert);
+  glBufferSubData(GL_ARRAY_BUFFER, sizeof(vert), sizeof(normals), normals);
+  glBindBuffer(GL_ARRAY_BUFFER, bods[0]);
+  glVertexPointer(3, GL_FLOAT, 0, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, bods[0]);
+  glNormalPointer(GL_FLOAT, 0, (void*)sizeof(vert));
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bods[SIDX]); // create a new buffer object, of type
+  glDrawElements(GL_TRIANGLE_STRIP, sizeof(ids)/sizeof(unsigned int), GL_UNSIGNED_INT, (void*)0);
+
+
   return;
 }
 
