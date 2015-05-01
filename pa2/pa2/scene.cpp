@@ -286,7 +286,35 @@ X3Cylinder::Render() const
   // TASK 1: YOUR CODE HERE: Modify this function to render a cylinder.
   // Make sure to use top_, side_, and bottom_ flags and to compute 
   // and set the normals properly.
-
+  const int N = 10;
+  const float step = 2.0f * M_PI / N;
+  if (side_) {
+    glBegin(GL_QUAD_STRIP);
+    for (int k = 0; k < N+1; ++k) {
+      glNormal3f(cos(k*step), 0, sin(k*step));
+      glVertex3f(radius_*cos(k*step), -0.5f*height_, radius_*sin(k*step));
+      glVertex3f(radius_*cos(k*step), 0.5f*height_, radius_*sin(k*step));
+    }
+    glEnd();
+  }
+  if (top_) {
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, 0.5f*height_, 0.0f);
+    for (int k = 0; k < N+1; ++k) {
+      glVertex3f(radius_*cos(-k*step), 0.5f*height_, radius_*sin(-k*step));
+    }
+    glEnd();
+  }
+  if (bottom_) {
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0.0f, -1.0f, 0.0f);
+    glVertex3f(0.0f, -0.5f*height_, 0.0f);
+    for (int k = 0; k < N+1; ++k) {
+      glVertex3f(radius_*cos(k*step), -0.5f*height_, radius_*sin(k*step));
+    }
+    glEnd();
+  }
   return;
 }
 
@@ -521,7 +549,13 @@ X3Material::Render() const
    * Also assume materials are two sided and the given properties
    * apply to both sides.
   */
-
+  glMaterialf(GL_FRONT, GL_AMBIENT, ambient_intensity_);
+    
+  glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color_);
+  glMaterialfv(GL_FRONT, GL_EMISSION, emissive_color_);
+  
+  glMaterialf(GL_FRONT, GL_SHININESS, shininess_ * 128);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, specular_color_);
   return;
 }
 
@@ -563,7 +597,15 @@ X3PointLight::SetupLights(int* light_count) const
    * Basically, pass along all the light's properties read from the X3D file
    * to OpenGL by calling glLight().
   */
-
+  GLenum current_light = GL_LIGHT0 + *light_count;
+  glLightf(current_light, GL_CONSTANT_ATTENUATION, attenuation_(0));
+  glLightf(current_light, GL_LINEAR_ATTENUATION, attenuation_(1));
+  glLightf(current_light, GL_QUADRATIC_ATTENUATION, attenuation_(2));
+  XVec4f loc(location_(0), location_(1), location_(2), 1.0);
+  glLightfv(current_light, GL_POSITION, loc);
+  glLightfv(current_light, GL_AMBIENT, ambient_intensity() * color());
+  glLightfv(current_light, GL_DIFFUSE, intensity() * color());
+  glLightfv(current_light, GL_SPECULAR, intensity() * color());
   // Keep this call at the end to do proper light counting.
   // It also turns on (glEnable()) all of your lights for you.
   X3LightNode::SetupLights(light_count);
@@ -717,7 +759,21 @@ X3Transform::Render() const
    * as follows: P' = T * C * R * S * - C * P
    * See explanation on notation in Section 10.4.4 of the X3D specs
   */
-
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  //T
+  glTranslatef(translation_(0), translation_(1), translation_(2));
+  //C
+  glTranslatef(center_(0), center_(1), center_(2));
+  //R
+  glRotatef(rotation_.angle_rad*180/M_PI, rotation_.axis(0), rotation_.axis(1), rotation_.axis(2));
+  //S
+  glScalef(scale_(0), scale_(1), scale_(2));
+  //-C
+  glTranslatef(-center_(0), -center_(1), -center_(2));
+    
+  X3GroupingNode::Render();
+  glPopMatrix();
   return;
 }
 
@@ -731,7 +787,21 @@ X3Transform::SetupLights(int* light_count) const
    * calling X3GroupingNode::Render(), you call X3GroupingNode::SetupLights()
    * to set up the children's lights.
   */
-
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  //T
+  glTranslatef(translation_(0), translation_(1), translation_(2));
+  //C
+  glTranslatef(center_(0), center_(1), center_(2));
+  //R
+  glRotatef(rotation_.angle_rad*180/M_PI, rotation_.axis(0), rotation_.axis(1), rotation_.axis(2));
+  //S
+  glScalef(scale_(0), scale_(1), scale_(2));
+  //-C
+  glTranslatef(-center_(0), -center_(1), -center_(2));
+    
+  X3GroupingNode::SetupLights(light_count);
+  glPopMatrix();
   return;
 }
 
@@ -767,7 +837,13 @@ X3Viewpoint::track_latlong(float dx, float dy)
    * longitude/latitude of the spherical space around the
    * world when Render() is called.
   */
-
+  position_.rotate(dx, up_);
+  XVec3f u_axis;
+  u_axis = position_.cross(up_);
+  u_axis.normalize();
+  
+  position_.rotate(dy, u_axis);
+  up_.rotate(dy, u_axis);
   return;
 }
 
@@ -779,7 +855,8 @@ X3Viewpoint::dolly(float dz)
    * some states to effect camera movement along the
    * gaze direction when Render() is called.
   */
-
+  for(int i = 0; i <= 2; ++i)
+    position_(i) *= (1 + dz);
   return;
 }
 
