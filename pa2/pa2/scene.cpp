@@ -414,6 +414,29 @@ X3IndexedFaceSet::Render() const
    * rendering mode.  Remember to specify glNormal()
    * before each call to glVertex().
   */
+  vector<XVec3i>::const_iterator tri_itor= triangles_.begin();
+  vector<XVec4i>::const_iterator qua_itor = quads_.begin();
+  glBegin(GL_TRIANGLES);
+  for (; tri_itor != triangles_.end(); ++tri_itor)
+  {
+      for (int i = 0; i < 3; i++)
+      {
+          glNormal3fv(normals_[(*tri_itor)(i)]);
+          glVertex3fv(coordinate_->point((*tri_itor)(i)));
+      }
+  }
+  glEnd();
+  
+  glBegin(GL_QUADS);
+  for (; qua_itor != quads_.end(); ++qua_itor)
+  {
+      for (int i = 0; i < 4; i++)
+      {
+          glNormal3fv(normals_[(*qua_itor)(i)]);
+          glVertex3fv(coordinate_->point((*qua_itor)(i)));
+      }
+  }
+  glEnd();
   return;
 }
 
@@ -449,6 +472,33 @@ X3IndexedFaceSet::Add(X3NodeType type, X3Node* node)
      * coordinate_->point(triangle_[0](1)), and
      * coordinate_->point(triangle_[0](2)).
     */
+    XVec3f v1, v2, one_normal;
+    vector<XVec3i>::const_iterator tri_itor= triangles_.begin();
+    vector<XVec4i>::const_iterator qua_itor = quads_.begin();
+    for (; tri_itor != triangles_.end(); tri_itor++)
+    {
+        v1 = coordinate_->point((*tri_itor)(1)) - coordinate_->point((*tri_itor)(0));
+        v2 = coordinate_->point((*tri_itor)(2)) - coordinate_->point((*tri_itor)(0));
+        one_normal = v1.cross(v2);
+        one_normal.normalize();
+        
+        for (int i = 0; i < 3; i++)
+            normals_[(*tri_itor)(i)] += one_normal;
+    }
+    
+    for (; qua_itor != quads_.end(); qua_itor++)
+    {
+        v1 = coordinate_->point((*qua_itor)(1)) - coordinate_->point((*qua_itor)(0));
+        v2 = coordinate_->point((*qua_itor)(2)) - coordinate_->point((*qua_itor)(0));
+        one_normal = v1.cross(v2);
+        one_normal.normalize();
+        for (int i = 0; i < 4; i++)
+            normals_[(*qua_itor)(i)] += one_normal;
+    }
+    for (size_t i = 0; i < normals_.size(); ++i)
+    {
+      normals_[i].normalize();
+    }
   } else {
     X3Node::Add(type, node);
   }
@@ -604,6 +654,7 @@ X3PointLight::SetupLights(int* light_count) const
   XVec4f loc(location_(0), location_(1), location_(2), 1.0);
   glLightfv(current_light, GL_POSITION, loc);
   glLightfv(current_light, GL_AMBIENT, ambient_intensity() * color());
+
   glLightfv(current_light, GL_DIFFUSE, intensity() * color());
   glLightfv(current_light, GL_SPECULAR, intensity() * color());
   // Keep this call at the end to do proper light counting.
