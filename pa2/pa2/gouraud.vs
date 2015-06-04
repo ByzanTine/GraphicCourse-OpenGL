@@ -23,6 +23,10 @@
 void 
 main(void) 
 {
+
+    vec3 normal;
+    vec3 viewVec;// = vec3(0.0, 0.0, 1.0);
+    vec3 lightVec[gl_MaxLights];
   vec4 position = gl_ModelViewMatrix * gl_Vertex;
   gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 
@@ -47,5 +51,34 @@ main(void)
    * OpenGL adds contribution to the total color whenever
    * dot(n,l) != 0, not just when dot(n,l) < 0.
    */
+  // according to X3d light spec
+  vec3 V = vec3(0.0, 0.0, 1.0);
+  vec3 N = gl_NormalMatrix * gl_Normal;
+  N = normalize(N);
+  gl_FrontColor = gl_FrontLightModelProduct.sceneColor;
+  for (int i = 0; i < gl_MaxLights; ++i)
+  {
+    /* code */
+    gl_LightSourceParameters light = gl_LightSource[i];
+    vec3 L = light.position.xyz - position.xyz;
+    float distance = length(L);
+    L = normalize(L);
+    float attenuation = 1.0/(light.constantAttenuation
+                  + light.linearAttenuation * distance
+                  + light.quadraticAttenuation * distance * distance);
+    vec4 i_ambient = gl_FrontLightProduct[i].ambient;
+    vec4 i_diffuse = gl_FrontLightProduct[i].diffuse * max(dot(N, L), 0.0);
+
+
+    vec4 i_specular = gl_FrontLightProduct[i].specular
+              * pow(max(0.0, dot(N, normalize(L + V))), gl_FrontMaterial.shininess);
+    
+    vec4 I_sum = i_ambient + i_diffuse + i_specular;
+    gl_FrontColor += attenuation * I_sum;
+  }
+  
+
+
+    
   gl_FrontColor.a = 1.0;
 }
