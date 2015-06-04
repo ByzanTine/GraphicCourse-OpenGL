@@ -20,6 +20,8 @@
 #version 120
 
 varying vec4 position;
+varying vec3 normal;
+varying vec3 viewVec;
 
 void 
 main(void) 
@@ -31,4 +33,9 @@ main(void)
    * you might want to consult Example 4: Ivory
    * from the Progammable Shaders lecture slides
   */
+
+  normal = normalize(gl_NormalMatrix * gl_Normal);
+  
+  
+  viewVec = -position.xyz;
 }
