@@ -81,6 +81,8 @@ load_texture(LTGA *texture)
    *   to GL_TRUE using glParameteri() BEFORE calling
    *   glTexImage2D().
   */
+  // glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAX_LEVEL, 30);
+  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 
   /* TASK 1: YOUR CODE HERE
    *
@@ -98,11 +100,27 @@ load_texture(LTGA *texture)
    * buffer object
    */
   /* Specify texture */
+  GLsizei width = texture->GetImageWidth();
+  GLsizei height = texture->GetImageHeight();
+  GLenum image_type = texture->GetImageType();
+  // TODO handle image_type
+  // glEnable(GL_TEXTURE_2D);
+  glEnable(GL_TEXTURE_2D);
+  // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width,
+                 height,0, GL_RGB, GL_UNSIGNED_BYTE, 0); // texture->GetPixels() for last argument 
+  int err = glGetError(); assert(err == GL_NO_ERROR); 
+  // int err = glGetError(); assert(err == GL_NO_ERROR); 
   /* Set texture parameters */
   // linearly interpolate between 4 nearest texel values while
   // shrinking or stretching
-
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  //   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  
   // clamp texture coordinates (s,t) to [0,1] each
   /* BGIN SOLUTION */
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -131,6 +149,7 @@ toggle_mipmapping()
      * Turn on mipmapping using glTexParameteri().
      * Assume mipmap has been generated in load_texture().
      */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
   } else {
     // linearly interpolate between 4 nearest texel values while 
     // shrinking or stretching
@@ -158,7 +177,9 @@ pbo_alloc(uint size)
    *
    * Replace the following line with your code
   */
-  return ((void *)malloc(size));
+  // return ((void *)malloc(size));
+  glBufferData(GL_PIXEL_UNPACK_BUFFER, size, NULL, GL_STREAM_DRAW);
+  return glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
 }
 
 void
@@ -192,6 +213,9 @@ init_texture(const char *texture_image_filename)
    * Generate a pixel buffer object and
    * bind it to the pixel unpack buffer.
    */
+  GLuint pixelBuffer;
+  glGenBuffers(1, &pixelBuffer);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pixelBuffer);
 
   read_texture(&texture, texture_image_filename);
 
@@ -200,12 +224,15 @@ init_texture(const char *texture_image_filename)
    * otherwise glTexImage2D() won't have
    * access to the buffer.
   */
-  
+  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   /* TASK 1: YOUR CODE HERE:
    * Generate a texture object and bind
    * it to the 2D texture object
    */
-  
+  GLuint tod;
+  glGenTextures(1, &tod);
+  glBindTexture(GL_TEXTURE_2D, tod);
+
   load_texture(&texture);
 
   /* TASK 3: YOUR CODE HERE
@@ -214,6 +241,7 @@ init_texture(const char *texture_image_filename)
    * buffer object, which also automatically unbinds
    * the pixel unpack buffer.
    */
+  glDeleteBuffers(1, &pixelBuffer);
 
   return;
 }

@@ -77,7 +77,8 @@ init_sphere()
    *
    * Replace the following line with your code
   */
-  vertices = (postex_t *) malloc((SLICES+1)*(STACKS+1)*sizeof(postex_t));
+  vertices = (postex_t *)(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE));
+  // vertices = (postex_t *) malloc((SLICES+1)*(STACKS+1)*sizeof(postex_t));
   
   /* Sphere */
   for (i = SLICES+1, theta = inc_theta;
@@ -93,7 +94,11 @@ init_sphere()
       vertices[i].position.y() = sintheta*sinphi;
       vertices[i].position.z() = costheta;
 
+      vertices[i].texcoords.s() = phi/fullcircle;
+      vertices[i].texcoords.t() = theta/M_PI;
       /* TASK 1: YOUR CODE HERE assign texture coordinates per vertex */
+      // vertices[i].texcoords.s() = phi/fullcircle;
+      // vertices[i].texcoords.t() = theta/laststack;
     }
   }
 
@@ -104,6 +109,8 @@ init_sphere()
     vertices[i].position = XVec3f(0.0, 0.0, -1.0);
 
     /* TASK 1: YOUR CODE HERE: assign texture coordinates to the pole vertices */
+    vertices[i].texcoords = XVec2f((phi)/fullcircle, 1.0);
+    vertices[j].texcoords = XVec2f(1 - (phi)/fullcircle, 0.0);
   }
 
   /* TASK 4: YOUR CODE HERE:
@@ -111,9 +118,10 @@ init_sphere()
    *
    * Replace the following 3 lines with your code
   */
-  glBufferSubData(GL_ARRAY_BUFFER, 0,
-               (SLICES+1)*(STACKS+1)*sizeof(postex_t), vertices);
-  free(vertices);
+  glUnmapBuffer(GL_ARRAY_BUFFER);
+  // glBufferSubData(GL_ARRAY_BUFFER, 0,
+  //              (SLICES+1)*(STACKS+1)*sizeof(postex_t), vertices);
+  // free(vertices);
 
   /* Enable client-side vertex position and normal attributes
    * and set up pointer to the arrays.  Since we're interleaving
@@ -142,7 +150,9 @@ init_sphere()
    * object, i.e., don't forget to multiply the count by
    * sizeof(float).
   */
-
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(postex_t), (GLvoid*) sizeof(XVec3f));
+  int err = glGetError(); assert(err == GL_NO_ERROR); 
   /* Bind the GL_ELEMENT_ARRAY_BUFFER and allocate enough space
    * in graphics system memory to hold the element index
    * array to be used by glDrawElement().
@@ -158,8 +168,8 @@ init_sphere()
    *
    * Replace the following line with your code
    */
-  vertidx = (GLuint *) malloc((SLICES+1)*STACKS*2*sizeof(GLuint));
-
+  // vertidx = (GLuint *) malloc((SLICES+1)*STACKS*2*sizeof(GLuint));
+  vertidx =(GLuint *) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_READ_WRITE);
   // triangle strip
   //   - the poles cannot use triangle fan due to texcoords
   midrift = STACKS*(SLICES+1);  
@@ -175,11 +185,11 @@ init_sphere()
    *
    * Replace the following two calls with your code
   */
-  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
-                  (SLICES+1)*STACKS*2*sizeof(GLuint),
-                  vertidx);
-  free(vertidx);
-  
+  // glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
+  //                 (SLICES+1)*STACKS*2*sizeof(GLuint),
+  //                 vertidx);
+  // free(vertidx);
+  glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
   return;
 }
 
