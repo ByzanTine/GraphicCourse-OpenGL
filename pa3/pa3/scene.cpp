@@ -112,13 +112,66 @@ bool
 load_texture(LTGA *texture)
 {
   /* 
-   * TASK 1: copy whole function from Lab6 
+   * TASK 2: YOUR CODE HERE
    *
-   * Use the texture to modulate surface shading
-   * instead of simply replacing it.
+   * Set up autogeneration of mipmap:
+   * - specify GL_TEXTURE_MAX_LEVEL using glTexParameteri()
+   * - auto generate mipmap by setting GL_GENERATE_MIPMAP
+   *   to GL_TRUE using glParameteri() BEFORE calling
+   *   glTexImage2D().
+  */
+  // glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAX_LEVEL, 30);
+  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+  /* TASK 1: YOUR CODE HERE
    *
-   * Don't forget to enable texturing. 
+   * Specify the texture and set its parameters. 
+   * To actually map the texture onto the sphere,
+   * go back to the init_sphere() functions and assign a pair of 
+   * texture coordinates to each vertex forming the object.
+   * You may want to use the GetAlphaDepth() and GetImageType()
+   * methods of LTGA (see ltga.h and ltga.cpp ) to determine
+   * whether the image is greyscale (GL_LUMINANCE or
+   * GL_LUMINANCE_ALPHA) or color (GL_RGB or GL_RGBA).
+   *
+   * TASK 3: YOUR CODE HERE
+   * Modify your call to glTexImage2D() to work with pixel 
+   * buffer object
    */
+  /* Specify texture */
+  GLsizei width = texture->GetImageWidth();
+  GLsizei height = texture->GetImageHeight();
+  GLenum image_type = texture->GetImageType();
+  // TODO handle image_type
+  // glEnable(GL_TEXTURE_2D);
+  glEnable(GL_TEXTURE_2D);
+  // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width,
+                 height,0, GL_RGB, GL_UNSIGNED_BYTE, 0); // texture->GetPixels() for last argument 
+  int err = glGetError(); assert(err == GL_NO_ERROR); 
+  // int err = glGetError(); assert(err == GL_NO_ERROR); 
+  /* Set texture parameters */
+  // linearly interpolate between 4 nearest texel values while
+  // shrinking or stretching
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  //   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  
+  // clamp texture coordinates (s,t) to [0,1] each
+  /* BGIN SOLUTION */
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  /* END SOLUTION */
+
+  // Simply copy the texture, don't modulate or blend etc
+  // and enable texture
+
+  // perspective correct interpolation
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
 
   return true;
 }
@@ -136,6 +189,7 @@ toggle_mipmapping()
      * Turn on mipmapping using glTexParameteri().
      * Assume mipmap has been generated in load_texture().
      */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
   } else {
     // linearly interpolate between 4 nearest texel values while 
     // shrinking or stretching
@@ -159,7 +213,8 @@ void *
 pbo_alloc(GLuint size)
 {
   /* TASK 1: Replace the call to malloc with your code from lab6 */
-  return ((void *)malloc(size));
+  glBufferData(GL_PIXEL_UNPACK_BUFFER, size, NULL, GL_STREAM_DRAW);
+  return glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
 }
 
 void
@@ -198,7 +253,9 @@ init_textures(int ntexs, char *texfiles[])
    * Generate a pixel buffer object and
    * bind it to the pixel unpack buffer
    */
-
+  GLuint pixelBuffer;
+  glGenBuffers(1, &pixelBuffer);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pixelBuffer);
   /* TASK 4: YOUR CODE HERE
    * Generate ntods texture objects (tods) to load ntexs textures,
    * instead of just loading one texture into tod.  Both "ntods"
@@ -215,13 +272,14 @@ init_textures(int ntexs, char *texfiles[])
    * otherwise glTexImage2D() won't have
    * access to the buffer.
    */
-  
+  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   /* 
    * TASK 1: *adapt* from Lab6
    * Generate a texture object, put the descriptor
    * in tods[0] and bind it to the 2D texture object
    */
-
+  glGenTextures(1, &tods[0]);
+  glBindTexture(GL_TEXTURE_2D, tods[0]);
   /* TASK 4: YOUR CODE HERE
    * Replace the above TASK 1 by binding each
    * of the ntods elements of tods to the
@@ -237,7 +295,7 @@ init_textures(int ntexs, char *texfiles[])
    * buffer object, which also automatically unbinds
    * the pixel unpack buffer.
    */
-  
+  glDeleteBuffers(1, &pixelBuffer);
   /* TASK 6:
    * Pass the default texture unit (GL_TEXTURE0)
    * as a uniform variable to the shader.

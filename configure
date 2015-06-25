@@ -3,4 +3,5 @@ make -C lab2/lab2
 make -C lab3/lab3
 make -C lab4/lab4
 make -C lab5/lab5
+make -C lab6/lab6
 make -C pa2/pa2

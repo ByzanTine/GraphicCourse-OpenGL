@@ -105,7 +105,8 @@ init_sphere()
    * which interleaves the position and texcoords of
    * each vertex.
   */
-  vertices = (sphere_vertex_t *) malloc((SLICES+1)*(STACKS+1)*sizeof(sphere_vertex_t));
+  vertices = (sphere_vertex_t *)(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE));
+  // vertices = (sphere_vertex_t *) malloc((SLICES+1)*(STACKS+1)*sizeof(sphere_vertex_t));
   
   /* Sphere */                          // we'll do the north pole together
   for (i = SLICES+1, theta = inc_theta; // with the south pole later
@@ -123,7 +124,8 @@ init_sphere()
 
       /* TASK 1: copy your code from Lab6 */
       /* assign texture coordinates per vertex */
-
+      vertices[i].texcoords.s() = phi/fullcircle;
+      vertices[i].texcoords.t() = theta/M_PI;
     }
   }
 
@@ -136,7 +138,8 @@ init_sphere()
 
     /* TASK 1: copy your code from Lab6 */
     /* assign texture coordinates to the pole vertices */
-
+    vertices[i].texcoords = XVec2f((phi)/fullcircle, 1.0);
+    vertices[j].texcoords = XVec2f(1 - (phi)/fullcircle, 0.0);
   }
 
   /* TASK 7:
@@ -151,10 +154,11 @@ init_sphere()
    *
    * Release the mapped buffer.
   */
-  glBufferSubData(GL_ARRAY_BUFFER, 0,
-               (SLICES+1)*(STACKS+1)*sizeof(sphere_vertex_t), vertices);
-  free(vertices);
+  // glBufferSubData(GL_ARRAY_BUFFER, 0,
+  //              (SLICES+1)*(STACKS+1)*sizeof(sphere_vertex_t), vertices);
+  // free(vertices);
 
+  glUnmapBuffer(GL_ARRAY_BUFFER);
   /* TASK 5: YOUR CODE HERE
    * get shader vertex position and normal attribute locations
    */
@@ -199,7 +203,9 @@ init_sphere()
    * set to BYTE offset from the start of the mapped buffer
    * object.
   */
-
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(sphere_vertex_t), (GLvoid*) sizeof(XVec3f));
+  int err = glGetError(); assert(err == GL_NO_ERROR); 
   /* TASK 6: YOUR CODE HERE
    *
    * Replace the client-side vertex texture coordinates attribute
@@ -228,8 +234,8 @@ init_sphere()
    * allocate enough space for the index array
    * for use by glDrawElement().
    */
-  vertidx = (GLuint *) malloc((SLICES+1)*STACKS*2*sizeof(GLuint));
-
+  // vertidx = (GLuint *) malloc((SLICES+1)*STACKS*2*sizeof(GLuint));
+  vertidx =(GLuint *) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_READ_WRITE);
   // triangle strip
   //   - the poles cannot use triangle fan due to texcoords
   midrift = STACKS*(SLICES+1);  
@@ -245,11 +251,11 @@ init_sphere()
    *
    * Release the mapped index buffer.
   */
-  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
-                  (SLICES+1)*STACKS*2*sizeof(GLuint),
-                  vertidx);
-  free(vertidx);
-  
+  // glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
+  //                 (SLICES+1)*STACKS*2*sizeof(GLuint),
+  //                 vertidx);
+  // free(vertidx);
+  glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
   return true;
 }
 
