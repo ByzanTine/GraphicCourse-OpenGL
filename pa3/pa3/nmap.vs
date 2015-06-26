@@ -29,7 +29,8 @@ varying vec3 normal, view, light;
  * Define vertex attribute variables
  * for position and normal.
  */
-
+attribute vec4 va_Vertex;
+attribute vec3 va_Normal;
 /* TASK 6: YOUR CODE HERE
  * You need to input texture coordinates
  * from the application and pass it
@@ -48,9 +49,9 @@ main(void)
    * Replace the use of gl_Vertex and gl_Normal
    * below with your own vertex attributes.
   */
-  position = gl_ModelViewMatrix*gl_Vertex;
-  gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
-  normal = gl_NormalMatrix*gl_Normal;
+  position = gl_ModelViewMatrix*va_Vertex;
+  gl_Position = gl_ModelViewProjectionMatrix*va_Vertex;
+  normal = gl_NormalMatrix*va_Normal;
 
   /* TASK 6: YOUR CODE HERE
    * 

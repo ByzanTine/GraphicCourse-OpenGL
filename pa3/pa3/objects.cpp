@@ -48,12 +48,24 @@ extern int nnmods;
 
 enum { OBJ, IDX, NOBS };
 
+GLuint vaods[NOBJS];
+
 typedef struct {
   XVec3f position;
   XVec2f texcoords;
   /* TASK 7: YOUR CODE HERE
    * add a vertex attribute for tangent */
 } sphere_vertex_t;
+
+
+typedef struct {
+  XVec3f position;
+  XVec3f normal;
+  XVec2f texcoords;
+  /* TASK 7: YOUR CODE HERE
+   * add a vertex attribute for tangent */
+} cube_vertex_t;
+
 
 bool
 init_sphere()
@@ -162,7 +174,8 @@ init_sphere()
   /* TASK 5: YOUR CODE HERE
    * get shader vertex position and normal attribute locations
    */
-
+  int vVertex = glGetAttribLocation(spd, "va_Vertex");
+  int vNormal = glGetAttribLocation(spd, "va_Normal");
   /* TASK 6: YOUR CODE HERE
    * get shader vertex texture coordinates locations
    */
@@ -176,17 +189,23 @@ init_sphere()
    * the vertex position (XVec3f) and texcoords (XVec2f), we need
    * to specify a stride of sizeof(XVec3f)+sizeof(XVec2f).
    */
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(3, GL_FLOAT, sizeof(sphere_vertex_t), 0);
-  glEnableClientState(GL_NORMAL_ARRAY);
-  glNormalPointer(GL_FLOAT, sizeof(sphere_vertex_t), 0);
+  // glEnableClientState(GL_VERTEX_ARRAY);
+  // glVertexPointer(3, GL_FLOAT, sizeof(sphere_vertex_t), 0);
+  // glEnableClientState(GL_NORMAL_ARRAY);
+  // glNormalPointer(GL_FLOAT, sizeof(sphere_vertex_t), 0);
+
   // Automatic normalization of normals
-  glEnable(GL_NORMALIZE);
+  // glEnable(GL_NORMALIZE);
   /* TASK 5: YOUR CODE HERE
    * Comment out the five function calls above
    * and replace them with shader version.
    */
-
+  glEnableVertexAttribArray(vVertex);
+  glVertexAttribPointer(vVertex, 3, GL_FLOAT, GL_FALSE, sizeof(sphere_vertex_t), 0);
+  int err = glGetError(); assert(err == GL_NO_ERROR); 
+  glEnableVertexAttribArray(vNormal);
+  glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_TRUE, sizeof(sphere_vertex_t), 0);
+  err = glGetError(); assert(err == GL_NO_ERROR); 
   /* 
    * TASK 1: copy your code from Lab6
    *
@@ -205,7 +224,7 @@ init_sphere()
   */
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
   glTexCoordPointer(2, GL_FLOAT, sizeof(sphere_vertex_t), (GLvoid*) sizeof(XVec3f));
-  int err = glGetError(); assert(err == GL_NO_ERROR); 
+  err = glGetError(); assert(err == GL_NO_ERROR); 
   /* TASK 6: YOUR CODE HERE
    *
    * Replace the client-side vertex texture coordinates attribute
@@ -281,7 +300,178 @@ init_cube()
    * TASK 2: YOUR CODE HERE
    * Initialize a cube.
    */
+  GLuint vbods[NOBS];
+  cube_vertex_t *vertices;
+  GLuint *vertidx;
+
+  glGenBuffers(NOBS, vbods);
+  if ((gl_error = glGetError()) != GL_NO_ERROR) {
+    cerr << "GenBuffers sphere: [Error " 
+         << gl_error << "] " << gluGetString(gl_error) << endl;
+    exit(1);
+  }
+
+  glBindBuffer(GL_ARRAY_BUFFER, vbods[OBJ]);
+  if ((gl_error = glGetError()) != GL_NO_ERROR) {
+    cerr << "BindBuffer sphere: [Error " 
+         << gl_error << "] " << gluGetString(gl_error) << endl;
+    exit(1);
+  }
+  /* Allocate enough space for the vertex array
+   * (3-coords position element) (= normal array
+   * for a smooth sphere) and the texture
+   * coordinates array (2-coords element)
+   * Total: 5*sizeof(float) = sizeof(sphere_vertex_t)
+   */
+  glBufferData(GL_ARRAY_BUFFER, 3*sizeof(cube_vertex_t), 
+               0, GL_STATIC_DRAW);
+  if ((gl_error = glGetError()) != GL_NO_ERROR) {
+    cerr << "BufferData sphere: [Error " 
+         << gl_error << "] " << gluGetString(gl_error) << endl;
+    exit(1);
+  }
+
+  /*
+   * TASK 1: replace the following line with your code from Lab6      
+   *
+   * Map the allocated buffer to an array of sphere_vertex_t,
+   * which interleaves the position and texcoords of
+   * each vertex.
+  */
+  vertices = (cube_vertex_t *)(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE));
+  // vertices = (sphere_vertex_t *) malloc((SLICES+1)*(STACKS+1)*sizeof(sphere_vertex_t));
   
+  
+  vertices[0].position = XVec3f(0.5f, 0.5f, 0.5f);
+  vertices[1].position = XVec3f(0.5f, 0.5f, -0.5f);
+  vertices[2].position = XVec3f(0.5f, -0.5f, 0.5f);
+  vertices[3].position = XVec3f(0.5f, -0.5f, -0.5f);
+
+  vertices[4].position = XVec3f(-0.5f, 0.5f, 0.5f);
+  vertices[5].position = XVec3f(-0.5f, 0.5f, -0.5f);
+  vertices[6].position = XVec3f(-0.5f, -0.5f, 0.5f);
+  vertices[7].position = XVec3f(-0.5f, -0.5f, -0.5f);
+  
+
+  
+
+  // also for texture coordiantes
+
+
+
+  /* TASK 7:
+   * Compute tangent of each triangle and assign
+   * them as attributes of the three vertices
+   * Don't forget to wrap around at the seam.
+  */
+  
+  /*
+   * TASK 1: replace the following three lines
+   * with your code from Lab6
+   *
+   * Release the mapped buffer.
+  */
+  // glBufferSubData(GL_ARRAY_BUFFER, 0,
+  //              (SLICES+1)*(STACKS+1)*sizeof(sphere_vertex_t), vertices);
+  // free(vertices);
+
+  glUnmapBuffer(GL_ARRAY_BUFFER);
+  /* TASK 5: YOUR CODE HERE
+   * get shader vertex position and normal attribute locations
+   */
+
+  /* TASK 6: YOUR CODE HERE
+   * get shader vertex texture coordinates locations
+   */
+
+  /* TASK 7: YOUR CODE HERE
+   * get shader tangent attribute locations
+   */
+
+  /* Enable client-side vertex position and normal attributes
+   * and set up pointer to the arrays.  Since we're interleaving
+   * the vertex position (XVec3f) and texcoords (XVec2f), we need
+   * to specify a stride of sizeof(XVec3f)+sizeof(XVec2f).
+   */
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glVertexPointer(3, GL_FLOAT, sizeof(cube_vertex_t), 0);
+  glEnableClientState(GL_NORMAL_ARRAY);
+  glNormalPointer(GL_FLOAT, sizeof(cube_vertex_t), 0);
+
+  // Automatic normalization of normals
+  glEnable(GL_NORMALIZE);
+  /* TASK 5: YOUR CODE HERE
+   * Comment out the five function calls above
+   * and replace them with shader version.
+   */
+
+  /* 
+   * TASK 1: copy your code from Lab6
+   *
+   * Enable client-side vertex texture coordinates attribute
+   * array and set up pointer to the array.  The first element
+   * of the texture-coordinates array is after the first vertex
+   * position coordinates.  Since we're interleaving
+   * the vertex position (XVec3f) and texcoords (XVec2f),
+   * subsequent texture coordinates are at stride
+   * sizeof(XVec2f)+sizeof(XVec3f) bytes from the start
+   * of the current texture coordinates.
+   *
+   * Caveat: make sure your texture coordinate pointer is
+   * set to BYTE offset from the start of the mapped buffer
+   * object.
+  */
+  // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  // glTexCoordPointer(2, GL_FLOAT, sizeof(cube_vertex_t), (GLvoid*) sizeof(XVec3f));
+  // int err = glGetError(); assert(err == GL_NO_ERROR); 
+  /* TASK 6: YOUR CODE HERE
+   *
+   * Replace the client-side vertex texture coordinates attribute
+   * array and pointer to it in TASK 1 above with shader version.
+   */
+
+  /* TASK 7: YOUR CODE HERE
+   * Enable shader vertex tangent attribute
+   * and set up pointer to the array.  The first element
+   * of the tangent array is after the first vertex
+   * position and texture coordinates.
+   */
+
+  /* Bind the GL_ELEMENT_ARRAY_BUFFER and allocate enough space
+   * in graphics system memory to hold the element index
+   * array to be used by glDrawElement().
+  */
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[IDX]);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 8*sizeof(GLuint),
+               0, GL_STATIC_DRAW); 
+
+  /*
+   * TASK 1: replace the line below with your code from Lab6
+   *
+   * Map the allocated buffer to the "index" variable.
+   * allocate enough space for the index array
+   * for use by glDrawElement().
+   */
+  // vertidx = (GLuint *) malloc((SLICES+1)*STACKS*2*sizeof(GLuint));
+  vertidx =(GLuint *) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_READ_WRITE);
+  // triangle strip
+  //   - the poles cannot use triangle fan due to texcoords
+
+  for (int i = 0; i < 8; ++i)
+  {
+    vertidx[i] = i;
+  }
+  /* 
+   * TASK 1: replace the following two calls with your code from Lab6
+   *
+   * Release the mapped index buffer.
+  */
+  // glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0,
+  //                 (SLICES+1)*STACKS*2*sizeof(GLuint),
+  //                 vertidx);
+  // free(vertidx);
+  glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+  return true;
   /* TASK 5: YOUR CODE HERE
    * Replace your use of client-side vertex position 
    * and normal attribute pointers with shader version.
@@ -293,18 +483,40 @@ init_cube()
    * TASK 7: YOUR CODE HERE
    * Pass vertex tangent to the shader as a vertex attribute.
    */
-
-  return true;
 }
 
 void
 draw_cube()
 {
+  // DEBUGGING AXIS LINES
+  glDisable(GL_LIGHTING);
+  float alpha = 225.0f;
+  float w = 10000.0f;
+  float h = 10000.0f;
+  glLineWidth(2.0);
+  glBegin(GL_LINES);
+    glColor4f(1.0, 0.0, 0.0, alpha);
+    glVertex3f(-w, 0.0, 0.0);
+    glVertex3f(w, 0.0, 0.0);
+    glColor4f(0.0, 1.0, 0.0, alpha);
+    glVertex3f(0.0, -h, 0.0);
+    glVertex3f(0.0, h, 0.0);
+    glColor4f(0.0, 0.0, 1.0, alpha);
+    glVertex3f(0.0, 0.0, -w);
+    glVertex3f(0.0, 0.0, w);
+  glEnd();
+
+  glEnable(GL_LIGHTING);
+  // DEBUGGING ABOVE
+
   /*
    * TASK 2: YOUR CODE HERE
    * Draw your cube.
    */
-
+  int i;
+  static const int countperstack = 8; 
+  glDrawElements(GL_TRIANGLES, 8, GL_UNSIGNED_INT, 
+                   0);
   return;
 }
 
@@ -330,6 +542,11 @@ init_world(objType drawobject)
      * bind to the SPHERE handle and call init_sphere(),
      * and bind to the CUBE handle and call init_cube().
     */
+    glGenVertexArrays(NOBJS, vaods);
+    glBindVertexArray(vaods[SPHERE]);
+    init_sphere();
+    glBindVertexArray(vaods[CUBE]);
+    init_cube();
     break;
   }
   
@@ -350,6 +567,11 @@ draw_world(objType drawobject)
      * TASK 7: YOUR CODE HERE
      * Bind the normal map for sphere.
      */
+    glBindVertexArray(vaods[SPHERE]);
+    // this two line to change a texutre. 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tods[SPHERE]);
+
     draw_sphere();
     break;
 
@@ -363,6 +585,7 @@ draw_world(objType drawobject)
      * TASK 7: YOUR CODE HERE
      * Bind the normal map for cube.
      */
+    glBindVertexArray(vaods[CUBE]);
     draw_cube();
     break;
 

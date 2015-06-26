@@ -58,7 +58,7 @@ enum ShaderModeEnum {
   NMAP, // BLINN
   PHONG_NMAP,
   NSHADERS
-} shader_mode = NONE; // TASK 5: replace NONE with NMAP
+} shader_mode = NMAP; // TASK 5: replace NONE with NMAP
 shader_t shaders[] = {
   { NULL, NULL },
   { (char *)"gouraud", (char *)"gouraud" },
@@ -255,7 +255,7 @@ init_textures(int ntexs, char *texfiles[])
    */
   GLuint pixelBuffer;
   glGenBuffers(1, &pixelBuffer);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pixelBuffer);
+  
   /* TASK 4: YOUR CODE HERE
    * Generate ntods texture objects (tods) to load ntexs textures,
    * instead of just loading one texture into tod.  Both "ntods"
@@ -263,30 +263,36 @@ init_textures(int ntexs, char *texfiles[])
   */
   ntods = ntexs;
   tods = (GLuint *) malloc(sizeof(GLuint)*ntods);
+  glGenTextures(ntods, tods);
+  for (int i = 0; i < ntexs; ++i)
+  {
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pixelBuffer);
+    read_texture(&texture, texfiles[i]);
 
-  read_texture(&texture, texfiles[0]);
+    /* 
+     * TASK 1: copy from Lab6
+     * Release the mapped pixel buffer object,
+     * otherwise glTexImage2D() won't have
+     * access to the buffer.
+     */
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    /* 
+     * TASK 1: *adapt* from Lab6
+     * Generate a texture object, put the descriptor
+     * in tods[0] and bind it to the 2D texture object
+     */
+    glBindTexture(GL_TEXTURE_2D, tods[i]);
+    /* TASK 4: YOUR CODE HERE
+     * Replace the above TASK 1 by binding each
+     * of the ntods elements of tods to the
+     * 2D texture object
+     */
+    
+    load_texture(&texture);
 
-  /* 
-   * TASK 1: copy from Lab6
-   * Release the mapped pixel buffer object,
-   * otherwise glTexImage2D() won't have
-   * access to the buffer.
-   */
-  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-  /* 
-   * TASK 1: *adapt* from Lab6
-   * Generate a texture object, put the descriptor
-   * in tods[0] and bind it to the 2D texture object
-   */
-  glGenTextures(1, &tods[0]);
-  glBindTexture(GL_TEXTURE_2D, tods[0]);
-  /* TASK 4: YOUR CODE HERE
-   * Replace the above TASK 1 by binding each
-   * of the ntods elements of tods to the
-   * 2D texture object
-   */
+  }
   
-  load_texture(&texture);
+
 
   /*
    * TASK 1: copy from Lab6
@@ -578,6 +584,8 @@ main(int argc, char *argv[])
    * TASK 2: drawobject = CUBE
    * TASK 3: drawobject = NOBJS;
    */
+
+  // drawobject = SPHERE;
   drawobject = SPHERE;
   //END PROBLEM*/
   if (init_lights() && 
