@@ -30,7 +30,8 @@ varying vec3 normal, view, light;
  * input interpolated texture coordinates
  * and uniform texture sampler
 */
-
+varying vec2 texcoord;
+uniform sampler2D texture;
 /*
  * TASK 7: YOUR CODE HERE
  * input interpolated tangent
@@ -59,8 +60,8 @@ main(void)
    * with a sample of the texture passed in by the application at
    * the texture coordinates passed in by the vertex shader.
   */
-  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-
+  // gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  gl_FragColor = texture2D(texture, texcoord);
   /*
    * Blend/modulate the texel with per-fragment Blinn lighting computation.
    * All of normal, light, and view vectors are assumed to be in tangent space.

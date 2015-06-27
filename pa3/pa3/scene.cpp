@@ -306,6 +306,11 @@ init_textures(int ntexs, char *texfiles[])
    * Pass the default texture unit (GL_TEXTURE0)
    * as a uniform variable to the shader.
    */
+  if (shader_mode == NMAP)
+  {
+    GLint tex0_id = glGetUniformLocation(spd, "texture");
+    glUniform1i(tex0_id, 0);
+  }
   
   return true;
 }
@@ -586,7 +591,7 @@ main(int argc, char *argv[])
    */
 
   // drawobject = SPHERE;
-  drawobject = SPHERE;
+  drawobject = NOBJS;
   //END PROBLEM*/
   if (init_lights() && 
       init_textures(ntexs+1, texfiles) &&

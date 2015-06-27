@@ -179,7 +179,7 @@ init_sphere()
   /* TASK 6: YOUR CODE HERE
    * get shader vertex texture coordinates locations
    */
-
+  int vTextcoord = glGetAttribLocation(spd, "va_Textcoord"); 
   /* TASK 7: YOUR CODE HERE
    * get shader tangent attribute locations
    */
@@ -222,15 +222,19 @@ init_sphere()
    * set to BYTE offset from the start of the mapped buffer
    * object.
   */
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-  glTexCoordPointer(2, GL_FLOAT, sizeof(sphere_vertex_t), (GLvoid*) sizeof(XVec3f));
-  err = glGetError(); assert(err == GL_NO_ERROR); 
+
+  // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  // glTexCoordPointer(2, GL_FLOAT, sizeof(sphere_vertex_t), (GLvoid*) sizeof(XVec3f));
+  // err = glGetError(); assert(err == GL_NO_ERROR); 
   /* TASK 6: YOUR CODE HERE
    *
    * Replace the client-side vertex texture coordinates attribute
    * array and pointer to it in TASK 1 above with shader version.
    */
 
+  glEnableVertexAttribArray(vTextcoord);
+  glVertexAttribPointer(vTextcoord, 2, GL_FLOAT, GL_FALSE, sizeof(sphere_vertex_t), (GLvoid*) sizeof(XVec3f));
+  err = glGetError(); assert(err == GL_NO_ERROR); 
   /* TASK 7: YOUR CODE HERE
    * Enable shader vertex tangent attribute
    * and set up pointer to the array.  The first element
@@ -303,6 +307,14 @@ init_cube()
   GLuint vbods[NOBS];
   cube_vertex_t *vertices;
   GLuint *vertidx;
+  // we will create a cube that all faces use the same texture
+  // so for the sake different textCoord in different faces
+  // we will have 6 * 4 = 24 points
+  int faces = 6;
+  int face_points = 4;
+  int face_triangle_points = 6;
+  int total_points = faces * face_points;
+  enum FACES {front, back, left, right, up, down};
 
   glGenBuffers(NOBS, vbods);
   if ((gl_error = glGetError()) != GL_NO_ERROR) {
@@ -323,7 +335,7 @@ init_cube()
    * coordinates array (2-coords element)
    * Total: 5*sizeof(float) = sizeof(sphere_vertex_t)
    */
-  glBufferData(GL_ARRAY_BUFFER, 3*sizeof(cube_vertex_t), 
+  glBufferData(GL_ARRAY_BUFFER, total_points*sizeof(cube_vertex_t), 
                0, GL_STATIC_DRAW);
   if ((gl_error = glGetError()) != GL_NO_ERROR) {
     cerr << "BufferData sphere: [Error " 
@@ -340,18 +352,75 @@ init_cube()
   */
   vertices = (cube_vertex_t *)(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE));
   // vertices = (sphere_vertex_t *) malloc((SLICES+1)*(STACKS+1)*sizeof(sphere_vertex_t));
+  // the following vertices order must hold
+  // front 
+  vertices[front * face_points + 0].position = XVec3f(0.5f, 0.5f, 0.5f);
+  vertices[front * face_points + 1].position = XVec3f(0.5f, 0.5f, -0.5f);
+  vertices[front * face_points + 2].position = XVec3f(0.5f, -0.5f, -0.5f);
+  vertices[front * face_points + 3].position = XVec3f(0.5f, -0.5f, 0.5f);
   
-  
-  vertices[0].position = XVec3f(0.5f, 0.5f, 0.5f);
-  vertices[1].position = XVec3f(0.5f, 0.5f, -0.5f);
-  vertices[2].position = XVec3f(0.5f, -0.5f, 0.5f);
-  vertices[3].position = XVec3f(0.5f, -0.5f, -0.5f);
-
-  vertices[4].position = XVec3f(-0.5f, 0.5f, 0.5f);
-  vertices[5].position = XVec3f(-0.5f, 0.5f, -0.5f);
-  vertices[6].position = XVec3f(-0.5f, -0.5f, 0.5f);
-  vertices[7].position = XVec3f(-0.5f, -0.5f, -0.5f);
-  
+  for (int i = 0; i < face_points; ++i)
+  {
+    /* code */
+    vertices[front * face_points + i].normal = XVec3f(1, 0, 0);
+  }
+  // back 
+  vertices[back * face_points + 0].position = XVec3f(-0.5f, -0.5f, 0.5f);
+  vertices[back * face_points + 1].position = XVec3f(-0.5f, -0.5f, -0.5f);
+  vertices[back * face_points + 2].position = XVec3f(-0.5f, 0.5f, -0.5f);
+  vertices[back * face_points + 3].position = XVec3f(-0.5f, 0.5f, 0.5f);
+  for (int i = 0; i < face_points; ++i)
+  {
+    vertices[back * face_points + i].normal = XVec3f(-1, 0, 0);
+  }
+  // left 
+  vertices[left * face_points + 0].position = XVec3f(0.5f, -0.5f, 0.5f);
+  vertices[left * face_points + 1].position = XVec3f(0.5f, -0.5f, -0.5f);
+  vertices[left * face_points + 2].position = XVec3f(-0.5f, -0.5f, -0.5f);
+  vertices[left * face_points + 3].position = XVec3f(-0.5f, -0.5f, 0.5f);
+  for (int i = 0; i < face_points; ++i)
+  {
+    /* code */
+    vertices[left * face_points + i].normal = XVec3f(0, -1, 0);
+  }
+  // right 
+  vertices[right * face_points + 0].position = XVec3f(0.5f, 0.5f, 0.5f);
+  vertices[right * face_points + 1].position = XVec3f(-0.5f, 0.5f, 0.5f);
+  vertices[right * face_points + 2].position = XVec3f(-0.5f, 0.5f, -0.5f);
+  vertices[right * face_points + 3].position = XVec3f(0.5f, 0.5f, -0.5f);
+  for (int i = 0; i < face_points; ++i)
+  {
+    vertices[right * face_points + i].normal = XVec3f(0, 1, 0);
+  }
+  // up 
+  vertices[up * face_points + 0].position = XVec3f(0.5f, 0.5f, 0.5f);
+  vertices[up * face_points + 1].position = XVec3f(0.5f, -0.5f, 0.5f);
+  vertices[up * face_points + 2].position = XVec3f(-0.5f, -0.5f, 0.5f);
+  vertices[up * face_points + 3].position = XVec3f(-0.5f, 0.5f, 0.5f);
+  for (int i = 0; i < face_points; ++i)
+  {
+    vertices[up * face_points + i].normal = XVec3f(0, 0, 1);
+  }
+  // down
+  vertices[down * face_points + 0].position = XVec3f(0.5f, 0.5f, -0.5f);
+  vertices[down * face_points + 1].position = XVec3f(-0.5f, 0.5f, -0.5f);
+  vertices[down * face_points + 2].position = XVec3f(-0.5f, -0.5f, -0.5f);
+  vertices[down * face_points + 3].position = XVec3f(0.5f, -0.5f, -0.5f);
+  for (int i = 0; i < face_points; ++i)
+  {
+    vertices[down * face_points + i].normal = XVec3f(0, 0, -1);
+  }
+  // vertices[4].position = XVec3f(-0.5f, 0.5f, 0.5f);
+  // vertices[5].position = XVec3f(-0.5f, 0.5f, -0.5f);
+  // vertices[6].position = XVec3f(-0.5f, -0.5f, 0.5f);
+  // vertices[7].position = XVec3f(-0.5f, -0.5f, -0.5f);
+  for (int i = 0; i < faces; ++i)
+  {
+    vertices[i * face_points + 0].texcoords = XVec2f(0, 0);
+    vertices[i * face_points + 1].texcoords = XVec2f(1, 0);
+    vertices[i * face_points + 2].texcoords = XVec2f(1, 1);
+    vertices[i * face_points + 3].texcoords = XVec2f(0, 1);
+  }
 
   
 
@@ -376,13 +445,13 @@ init_cube()
   // free(vertices);
 
   glUnmapBuffer(GL_ARRAY_BUFFER);
-  /* TASK 5: YOUR CODE HERE
-   * get shader vertex position and normal attribute locations
-   */
 
+  int vVertex = glGetAttribLocation(spd, "va_Vertex");
+  int vNormal = glGetAttribLocation(spd, "va_Normal");
   /* TASK 6: YOUR CODE HERE
    * get shader vertex texture coordinates locations
    */
+  int vTextcoord = glGetAttribLocation(spd, "va_Textcoord"); 
 
   /* TASK 7: YOUR CODE HERE
    * get shader tangent attribute locations
@@ -393,18 +462,23 @@ init_cube()
    * the vertex position (XVec3f) and texcoords (XVec2f), we need
    * to specify a stride of sizeof(XVec3f)+sizeof(XVec2f).
    */
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(3, GL_FLOAT, sizeof(cube_vertex_t), 0);
-  glEnableClientState(GL_NORMAL_ARRAY);
-  glNormalPointer(GL_FLOAT, sizeof(cube_vertex_t), 0);
+  // glEnableClientState(GL_VERTEX_ARRAY);
+  // glVertexPointer(3, GL_FLOAT, sizeof(cube_vertex_t), 0);
+  // glEnableClientState(GL_NORMAL_ARRAY);
+  // glNormalPointer(GL_FLOAT, sizeof(cube_vertex_t), (void*) sizeof(XVec3f));
 
-  // Automatic normalization of normals
-  glEnable(GL_NORMALIZE);
+  // // Automatic normalization of normals
+  // glEnable(GL_NORMALIZE);
   /* TASK 5: YOUR CODE HERE
    * Comment out the five function calls above
    * and replace them with shader version.
    */
-
+  glEnableVertexAttribArray(vVertex);
+  glVertexAttribPointer(vVertex, 3, GL_FLOAT, GL_FALSE, sizeof(cube_vertex_t), 0);
+  int err = glGetError(); assert(err == GL_NO_ERROR); 
+  glEnableVertexAttribArray(vNormal);
+  glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_TRUE, sizeof(cube_vertex_t), (void*) sizeof(XVec3f));
+  err = glGetError(); assert(err == GL_NO_ERROR); 
   /* 
    * TASK 1: copy your code from Lab6
    *
@@ -422,14 +496,16 @@ init_cube()
    * object.
   */
   // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-  // glTexCoordPointer(2, GL_FLOAT, sizeof(cube_vertex_t), (GLvoid*) sizeof(XVec3f));
-  // int err = glGetError(); assert(err == GL_NO_ERROR); 
+  // glTexCoordPointer(2, GL_FLOAT, sizeof(cube_vertex_t), (GLvoid*) (2 * sizeof(XVec3f)));
+  // err = glGetError(); assert(err == GL_NO_ERROR); 
   /* TASK 6: YOUR CODE HERE
    *
    * Replace the client-side vertex texture coordinates attribute
    * array and pointer to it in TASK 1 above with shader version.
    */
-
+  glEnableVertexAttribArray(vTextcoord);
+  glVertexAttribPointer(vTextcoord, 2, GL_FLOAT, GL_FALSE, sizeof(cube_vertex_t), (GLvoid*) (2 * sizeof(XVec3f)));
+  err = glGetError(); assert(err == GL_NO_ERROR); 
   /* TASK 7: YOUR CODE HERE
    * Enable shader vertex tangent attribute
    * and set up pointer to the array.  The first element
@@ -442,7 +518,7 @@ init_cube()
    * array to be used by glDrawElement().
   */
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[IDX]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 8*sizeof(GLuint),
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36*sizeof(GLuint),
                0, GL_STATIC_DRAW); 
 
   /*
@@ -456,11 +532,18 @@ init_cube()
   vertidx =(GLuint *) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_READ_WRITE);
   // triangle strip
   //   - the poles cannot use triangle fan due to texcoords
-
-  for (int i = 0; i < 8; ++i)
+  for (int i = 0; i < faces; ++i)
   {
-    vertidx[i] = i;
+    // for each faces 
+    vertidx[face_triangle_points * i + 0] = face_points * i + 0;
+    vertidx[face_triangle_points * i + 1] = face_points * i + 2;
+    vertidx[face_triangle_points * i + 2] = face_points * i + 1;
+
+    vertidx[face_triangle_points * i + 3] = face_points * i + 0;
+    vertidx[face_triangle_points * i + 4] = face_points * i + 3;
+    vertidx[face_triangle_points * i + 5] = face_points * i + 2;
   }
+
   /* 
    * TASK 1: replace the following two calls with your code from Lab6
    *
@@ -489,22 +572,22 @@ void
 draw_cube()
 {
   // DEBUGGING AXIS LINES
-  glDisable(GL_LIGHTING);
-  float alpha = 225.0f;
-  float w = 10000.0f;
-  float h = 10000.0f;
-  glLineWidth(2.0);
-  glBegin(GL_LINES);
-    glColor4f(1.0, 0.0, 0.0, alpha);
-    glVertex3f(-w, 0.0, 0.0);
-    glVertex3f(w, 0.0, 0.0);
-    glColor4f(0.0, 1.0, 0.0, alpha);
-    glVertex3f(0.0, -h, 0.0);
-    glVertex3f(0.0, h, 0.0);
-    glColor4f(0.0, 0.0, 1.0, alpha);
-    glVertex3f(0.0, 0.0, -w);
-    glVertex3f(0.0, 0.0, w);
-  glEnd();
+  // glDisable(GL_LIGHTING);
+  // float alpha = 225.0f;
+  // float w = 10000.0f;
+  // float h = 10000.0f;
+  // glLineWidth(2.0);
+  // glBegin(GL_LINES);
+  //   glColor4f(1.0, 0.0, 0.0, alpha);
+  //   glVertex3f(-w, 0.0, 0.0);
+  //   glVertex3f(w, 0.0, 0.0);
+  //   glColor4f(0.0, 1.0, 0.0, alpha);
+  //   glVertex3f(0.0, -h, 0.0);
+  //   glVertex3f(0.0, h, 0.0);
+  //   glColor4f(0.0, 0.0, 1.0, alpha);
+  //   glVertex3f(0.0, 0.0, -w);
+  //   glVertex3f(0.0, 0.0, w);
+  // glEnd();
 
   glEnable(GL_LIGHTING);
   // DEBUGGING ABOVE
@@ -513,9 +596,7 @@ draw_cube()
    * TASK 2: YOUR CODE HERE
    * Draw your cube.
    */
-  int i;
-  static const int countperstack = 8; 
-  glDrawElements(GL_TRIANGLES, 8, GL_UNSIGNED_INT, 
+  glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 
                    0);
   return;
 }
@@ -586,6 +667,10 @@ draw_world(objType drawobject)
      * Bind the normal map for cube.
      */
     glBindVertexArray(vaods[CUBE]);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, tods[CUBE]);
+    
     draw_cube();
     break;
 

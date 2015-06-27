@@ -30,12 +30,15 @@ varying vec3 normal, view, light;
  * for position and normal.
  */
 attribute vec4 va_Vertex;
+
 attribute vec3 va_Normal;
 /* TASK 6: YOUR CODE HERE
  * You need to input texture coordinates
  * from the application and pass it
  * along to the fragment shader.
 */
+attribute vec2 va_Textcoord;
+varying vec2 texcoord;
 
 /* TASK 7: YOUR CODE HERE
  * Input tangent and pass tangent-space
@@ -58,7 +61,7 @@ main(void)
    * pass texure coordinates from application
    * to the fragment shader.
   */
-
+  texcoord = va_Textcoord;
   /* TASK 7: YOUR CODE HERE
    *
    * Compute orthonormal B', T', and [T'B'N]
