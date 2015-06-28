@@ -55,6 +55,7 @@ typedef struct {
   XVec2f texcoords;
   /* TASK 7: YOUR CODE HERE
    * add a vertex attribute for tangent */
+  XVec3f tangent;
 } sphere_vertex_t;
 
 
@@ -139,6 +140,11 @@ init_sphere()
       /* assign texture coordinates per vertex */
       vertices[i].texcoords.s() = phi/fullcircle;
       vertices[i].texcoords.t() = theta/M_PI;
+
+      // HACK
+      // I only compute the tangent on the current normal
+      // Average normal is way too tedious 
+      vertices[i].tangent = vertices[i].position.cross(XVec3f(0, 0, -1));
     }
   }
 
@@ -153,6 +159,10 @@ init_sphere()
     /* assign texture coordinates to the pole vertices */
     vertices[i].texcoords = XVec2f((phi)/fullcircle, 1.0);
     vertices[j].texcoords = XVec2f(1 - (phi)/fullcircle, 0.0);
+    // HACK
+    // I only compute the tangent on the current normal
+    // Average normal is way too tedious 
+    vertices[i].tangent = vertices[i].position.cross(XVec3f(0, 0, -1));
   }
 
   /* TASK 7:
@@ -184,7 +194,7 @@ init_sphere()
   /* TASK 7: YOUR CODE HERE
    * get shader tangent attribute locations
    */
-
+  int vTangent = glGetAttribLocation(spd, "va_Tangent");
   /* Enable client-side vertex position and normal attributes
    * and set up pointer to the arrays.  Since we're interleaving
    * the vertex position (XVec3f) and texcoords (XVec2f), we need
@@ -242,7 +252,9 @@ init_sphere()
    * of the tangent array is after the first vertex
    * position and texture coordinates.
    */
-
+  glEnableVertexAttribArray(vTangent);
+  glVertexAttribPointer(vTangent, 3, GL_FLOAT, GL_TRUE, sizeof(sphere_vertex_t), (void*) (sizeof(XVec3f) + sizeof(XVec2f)));
+  err = glGetError(); assert(err == GL_NO_ERROR); 
   /* Bind the GL_ELEMENT_ARRAY_BUFFER and allocate enough space
    * in graphics system memory to hold the element index
    * array to be used by glDrawElement().
@@ -645,7 +657,8 @@ draw_world(objType drawobject)
     // this two line to change a texutre. 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tods[SPHERE]);
-
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, nmods[SPHERE]);
     draw_sphere();
     break;
 
