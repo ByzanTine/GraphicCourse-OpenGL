@@ -64,6 +64,7 @@ typedef struct {
   XVec2f texcoords;
   /* TASK 7: YOUR CODE HERE
    * add a vertex attribute for tangent */
+  XVec3f tangent;
 } cube_vertex_t;
 
 
@@ -361,7 +362,7 @@ init_cube()
   
   for (int i = 0; i < face_points; ++i)
   {
-    /* code */
+    vertices[front * face_points + i].tangent = XVec3f(0, 1, 0);
     vertices[front * face_points + i].normal = XVec3f(1, 0, 0);
   }
   // back 
@@ -371,6 +372,7 @@ init_cube()
   vertices[back * face_points + 3].position = XVec3f(-0.5f, 0.5f, 0.5f);
   for (int i = 0; i < face_points; ++i)
   {
+    vertices[back * face_points + i].tangent = XVec3f(0, 1, 0);
     vertices[back * face_points + i].normal = XVec3f(-1, 0, 0);
   }
   // left 
@@ -381,6 +383,7 @@ init_cube()
   for (int i = 0; i < face_points; ++i)
   {
     /* code */
+    vertices[left * face_points + i].tangent = XVec3f(0, 0, 1);
     vertices[left * face_points + i].normal = XVec3f(0, -1, 0);
   }
   // right 
@@ -390,6 +393,7 @@ init_cube()
   vertices[right * face_points + 3].position = XVec3f(0.5f, 0.5f, -0.5f);
   for (int i = 0; i < face_points; ++i)
   {
+    vertices[right * face_points + i].tangent = XVec3f(0, 0, 1);
     vertices[right * face_points + i].normal = XVec3f(0, 1, 0);
   }
   // up 
@@ -399,6 +403,7 @@ init_cube()
   vertices[up * face_points + 3].position = XVec3f(-0.5f, 0.5f, 0.5f);
   for (int i = 0; i < face_points; ++i)
   {
+    vertices[up * face_points + i].tangent = XVec3f(1, 0, 0);
     vertices[up * face_points + i].normal = XVec3f(0, 0, 1);
   }
   // down
@@ -408,6 +413,7 @@ init_cube()
   vertices[down * face_points + 3].position = XVec3f(0.5f, -0.5f, -0.5f);
   for (int i = 0; i < face_points; ++i)
   {
+    vertices[down * face_points + i].tangent = XVec3f(1, 0, 0);
     vertices[down * face_points + i].normal = XVec3f(0, 0, -1);
   }
   // vertices[4].position = XVec3f(-0.5f, 0.5f, 0.5f);
@@ -421,10 +427,6 @@ init_cube()
     vertices[i * face_points + 2].texcoords = XVec2f(1, 1);
     vertices[i * face_points + 3].texcoords = XVec2f(0, 1);
   }
-
-  
-
-  // also for texture coordiantes
 
 
 
@@ -456,7 +458,7 @@ init_cube()
   /* TASK 7: YOUR CODE HERE
    * get shader tangent attribute locations
    */
-
+  int vTangent = glGetAttribLocation(spd, "va_Tangent");
   /* Enable client-side vertex position and normal attributes
    * and set up pointer to the arrays.  Since we're interleaving
    * the vertex position (XVec3f) and texcoords (XVec2f), we need
@@ -512,7 +514,9 @@ init_cube()
    * of the tangent array is after the first vertex
    * position and texture coordinates.
    */
-
+  glEnableVertexAttribArray(vTangent);
+  glVertexAttribPointer(vTangent, 3, GL_FLOAT, GL_TRUE, sizeof(cube_vertex_t), (void*) (2 * sizeof(XVec3f) + sizeof(XVec2f)));
+  err = glGetError(); assert(err == GL_NO_ERROR); 
   /* Bind the GL_ELEMENT_ARRAY_BUFFER and allocate enough space
    * in graphics system memory to hold the element index
    * array to be used by glDrawElement().
@@ -555,17 +559,6 @@ init_cube()
   // free(vertidx);
   glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
   return true;
-  /* TASK 5: YOUR CODE HERE
-   * Replace your use of client-side vertex position 
-   * and normal attribute pointers with shader version.
-   *
-   * TASK 6: YOUR CODE HERE
-   * Replace your use of client-side texture coordinates
-   * pointer with shader version.
-   *
-   * TASK 7: YOUR CODE HERE
-   * Pass vertex tangent to the shader as a vertex attribute.
-   */
 }
 
 void
@@ -668,9 +661,10 @@ draw_world(objType drawobject)
      */
     glBindVertexArray(vaods[CUBE]);
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tods[SPHERE]);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, tods[CUBE]);
-    
+    glBindTexture(GL_TEXTURE_2D, nmods[SPHERE]);
     draw_cube();
     break;
 

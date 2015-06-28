@@ -37,7 +37,7 @@ uniform sampler2D texture;
  * input interpolated tangent
  * and uniform normal map sampler
 */
-
+uniform sampler2D normalMap;
 void 
 main(void)
 {
@@ -52,8 +52,8 @@ main(void)
    * Remember to convert the coordinates of normal
    * from [0,1] to [-1,1].
   */
-  n = normalize(normal);
-
+  // n = normalize(normal);
+  n = normalize(texture2D(normalMap, texcoord).xyz * 2.0f - 1.0f);
   /* TASK 6: YOUR CODE HERE 
    *
    * Replace the following line giving gl_FragColor a constant color

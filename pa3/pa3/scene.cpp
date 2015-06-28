@@ -326,7 +326,77 @@ init_textures(int ntexs, char *texfiles[])
 bool
 init_nmaps(int nnmaps, char *nmapfiles[])
 {
+  LTGA normalMap;
 
+  
+  if (!nnmaps) {
+    return true;
+  }
+  
+  /* 
+   * TASK 1: copy from Lab6
+   * Generate a pixel buffer object and
+   * bind it to the pixel unpack buffer
+   */
+  GLuint pixelBuffer;
+  glGenBuffers(1, &pixelBuffer);
+  
+  /* TASK 4: YOUR CODE HERE
+   * Generate ntods texture objects (tods) to load ntexs textures,
+   * instead of just loading one texture into tod.  Both "ntods"
+   * and "tods" are global variables.
+  */
+  nnmods = nnmaps;
+  nmods = (GLuint *) malloc(sizeof(GLuint)*nnmods);
+  glGenTextures(nnmods, nmods);
+  for (int i = 0; i < nnmods; ++i)
+  {
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pixelBuffer);
+    read_texture(&normalMap, nmapfiles[i]);
+
+    /* 
+     * TASK 1: copy from Lab6
+     * Release the mapped pixel buffer object,
+     * otherwise glTexImage2D() won't have
+     * access to the buffer.
+     */
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    /* 
+     * TASK 1: *adapt* from Lab6
+     * Generate a texture object, put the descriptor
+     * in tods[0] and bind it to the 2D texture object
+     */
+    glBindTexture(GL_TEXTURE_2D, nmods[i]);
+    /* TASK 4: YOUR CODE HERE
+     * Replace the above TASK 1 by binding each
+     * of the ntods elements of tods to the
+     * 2D texture object
+     */
+    
+    load_texture(&normalMap);
+
+  }
+  
+
+
+  /*
+   * TASK 1: copy from Lab6
+   * Now that the texture has been unpacked from the
+   * pbo to the texture object, delete the pixel
+   * buffer object, which also automatically unbinds
+   * the pixel unpack buffer.
+   */
+  glDeleteBuffers(1, &pixelBuffer);
+  /* TASK 6:
+   * Pass the default texture unit (GL_TEXTURE0)
+   * as a uniform variable to the shader.
+   */
+  if (shader_mode == NMAP)
+  {
+    GLint tex0_id = glGetUniformLocation(spd, "normalMap");
+    glUniform1i(tex0_id, 1);
+  }
+  
   return true;
 }
 

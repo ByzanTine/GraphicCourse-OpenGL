@@ -44,7 +44,7 @@ varying vec2 texcoord;
  * Input tangent and pass tangent-space
  * view and light vectors to fragment shader
 */
-
+attribute vec3 va_Tangent;
 void 
 main(void) 
 {
@@ -69,6 +69,18 @@ main(void)
    * Replace the following two lines with your
    * eye and light vectors in tangent space
   */
-  view = vec3(0.0, 0.0, 1.0);
-  light = vec3(0.0, 0.0, 1.0);
+  vec4 homo_tangent = vec4(va_Tangent.x, va_Tangent.y, va_Tangent.z, 0.0f);
+  vec3 tangent = normalize(gl_ModelViewMatrix * homo_tangent).xyz; // eye space 
+  vec3 bitTangent = cross(normal, tangent);
+  mat3 TBNMatrix = mat3(tangent, bitTangent, normal);
+  mat3 iTBNMatrix = transpose(TBNMatrix);
+
+
+  // view = vec3(0.0, 0.0, 1.0);
+  // light = vec3(0.0, 0.0, 1.0);
+  view = normalize(iTBNMatrix * -position.xyz);
+  light = normalize(iTBNMatrix * (gl_LightSource[0].position.xyz - position.xyz));
+
+
+
 }
