@@ -176,6 +176,14 @@ positionAndDrawLight()
   return;
 }
 
+GLfloat dot(const GLfloat * v0, const GLfloat * v1, int dim)
+{
+    GLfloat res = 0;
+    for (int i = 0; i < dim; i++) {
+        res += v0[i] * v1[i];
+    }
+    return res;
+}
 /* project onto 'receiverWall' with 'lightPos'
    being the point of convergence of the projection. think
    of it as a perspective projection onto 'receiverWall' */
@@ -188,7 +196,30 @@ multShadowMat(GLfloat *receiverWall)
    * Set the 16 components of the shadow matrix using
    * receiverWall and the global lightPos
   */
-
+  XVec3f normal(receiverWall[0], receiverWall[1], receiverWall[2]);
+  // XVec3f lightPos(lightPos[0], lightPos[1], lightPos[2]);
+  float ndotL = dot(receiverWall, lightPos, 3);
+  shadowMat.setRow(0, XVec4f(ndotL + receiverWall[3]-lightPos[0]*receiverWall[0], 
+                             -lightPos[0]*receiverWall[1],
+                             -lightPos[0]*receiverWall[2],
+                             -lightPos[0]*receiverWall[3]
+                            ));
+  shadowMat.setRow(1, XVec4f(-lightPos[1]*receiverWall[0],
+                             ndotL + receiverWall[3]-lightPos[1]*receiverWall[1], 
+                             -lightPos[1]*receiverWall[2],
+                             -lightPos[1]*receiverWall[3]
+                            ));
+  shadowMat.setRow(2, XVec4f(-lightPos[2]*receiverWall[0],
+                             -lightPos[2]*receiverWall[1],
+                             ndotL + receiverWall[3]-lightPos[2]*receiverWall[2],
+                             -lightPos[2]*receiverWall[3]
+                            ));
+  shadowMat.setRow(3, XVec4f(-receiverWall[0],
+                             -receiverWall[1],
+                             -receiverWall[2],
+                             ndotL
+                            ));
+  cout << shadowMat << endl;
   /* add the transformation to the ModelView matrix */
   glMultMatrixf(shadowMat);
 
@@ -283,13 +314,12 @@ drawScene()
 
   for (i = FLOOR; i <= REAR_WALL; i++) {
     if (clippedTo == FRONT_WALL || i == clippedTo) {
-
       /* TASK 2: YOUR CODE HERE: Clipped Shadows
        *
        * Set the stencil buffer operation to always accept
        * a fragment and set the reference value to 1
        */
-      
+      glStencilFunc(GL_ALWAYS, 1, 1);
       /* TASK 2: YOUR CODE HERE: Clipped Shadows
        *
        * Stencil buffered has been cleared to 0.
@@ -299,7 +329,8 @@ drawScene()
        * stencil and depth tests pass, replace the stencil buffer
        * value with ref value specified previously (1).
        */
-      
+      glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
       // draw the wall into stencil buffer only, not depth and color buffers
       glDisable(GL_DEPTH_TEST);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -314,7 +345,7 @@ drawScene()
        * values there are 1 and 0 everywhere else. Use 1 as the
        * stencil mask
        */
-      
+      glStencilFunc(GL_EQUAL, 1, 1);
       // shadows: draw the occluders in black,
       // projected onto the specified plane/wall
       drawShadows(walls[i]);
@@ -458,7 +489,9 @@ fbo_accum_return(GLuint fbod)
 
   return;
 }
-  
+float frand(float min = -1.0f, float max = 1.0f) {
+  return min + (max - min) * ((float)rand()/RAND_MAX);
+}
 void
 display()
 {
@@ -494,7 +527,21 @@ display()
      * buffer calls, so you should be able to replace them with a
      * one-to-one mapping.)
     */
-    drawScene(); // don't forget to call drawScene() for each jittered light position
+    glClear(GL_ACCUM_BUFFER_BIT);
+    for (int i = 0; i < numJitters; ++i)
+    {
+      // render 
+      
+      XVec3f displacement(frand(), frand(), frand());
+      displacement *= jitterAmount;
+      lightPos[0] = lightPos0[0] + displacement.x();
+      lightPos[1] = lightPos0[1] + displacement.y();
+      lightPos[2] = lightPos0[2] + displacement.z();
+      drawScene(); // don't forget to call drawScene() for each jittered light position
+      glAccum(GL_ACCUM, 1.0/(float)numJitters);
+    }
+    glAccum(GL_RETURN, 1.0);
+    
 
   } else {
     /* for hard shadows, just draw the scene */
