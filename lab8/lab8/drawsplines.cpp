@@ -1,0 +1,186 @@
+/*
+ * Copyright (c) 2007, 2011 University of Michigan, Ann Arbor.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms are permitted
+ * provided that the above copyright notice and this paragraph are
+ * duplicated in all such forms and that any documentation,
+ * advertising materials, and other materials related to such
+ * distribution and use acknowledge that the software was developed
+ * by the University of Michigan, Ann Arbor. The name of the University 
+ * may not be used to endorse or promote products derived from this 
+ * software without specific prior written permission.
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Authors: Manoj Rajagopalan, Sugih Jamin
+ *
+*/
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+
+#include "xvec.h"
+#include "xmat.h"
+
+#define NUM_POINTS 8
+extern XVec2f points[];
+
+#define NCUBIC 4
+#define NQUADRATIC 3
+#define NSAMPLES 32
+
+void
+draw_linear(void)
+{
+  int i;
+
+  /* Enable stippling on the linear segment */
+  glEnable(GL_LINE_STIPPLE);
+  glLineStipple(10, 0xAAAA);
+
+  glColor4f(1.0, 0.0, 0.0, 1.0);
+  glLineWidth(5.0);
+
+  /* Draw line segments with points (x, y).  In this case, we simply
+   * call OpenGL and let the graphics engine's rasterizer do the
+   * linear interpolation. For the other splines, we'd need to compute
+   * the interpolation manually, by computing the values of the spline
+   * function between the control points.
+  */
+  glBegin(GL_LINE_STRIP);
+  for (i = 0; i < NUM_POINTS; i++) {
+    glVertex2f(points[i](0), points[i][1]);
+  }
+  glEnd();
+        
+  /* Disable the dotted-line effect for drawing */
+  glDisable(GL_LINE_STIPPLE);
+
+  return;
+}
+
+inline void
+cspline_coeffs(XVec2f a[NCUBIC], /* result coefficients */
+               XMat4f B, /* spline's basis matrix */
+               XVec2f p[NCUBIC] /* control points */)
+{
+  memset((char *) a, 0, NCUBIC*sizeof(XVec2f));
+
+  /* YOUR CODE HERE TASK 1
+   *
+   * Given 4 control points p[0]...p[3], calculate the coefficients a[0]...a[3]
+   * of the cubic spline interpolating the control points.
+  */
+
+  return;
+}
+
+inline void
+cspline_eval(XVec2f &f,  /* result function */
+             float u,    /* spline parameter, 0 <= u <= 1 */
+             XVec2f a[NCUBIC] /* coefficients */)
+{
+  /* YOUR CODE HERE TASK 1
+   *
+   * Evaluate the cubic spline at the given parameter u,
+   * given the coefficients of the spline.
+  */
+
+  return;
+}
+
+void
+draw_catmull_rom(void)
+{
+  XMat4f C, B;
+  XVec2f a[NCUBIC], p;
+
+  /* YOUR CODE HERE TASK 1
+   *
+   * Manually populate C with the Catmull-Rom constraint matrix
+  */
+
+  /* YOUR CODE HERE TASK 1
+   *
+   * Compute B, the Catmull-Rom basis matrix, from C.
+   * You MUST use C and not fill in the matrix manually.
+  */
+
+  glColor3f(0.0, 0.0, 1.0);
+  glLineWidth(5.0);
+
+  /* YOUR CODE HERE TASK 1
+   *
+   * Draw a Catmull-Rom spline that interpolates every control points
+   * except the first and last ones.  For each spline segment between
+   * two interpolated control points, first compute the spline's
+   * coefficients for this segment.  Then samples the spline at
+   * NSAMPLES location on the spline, i.e., compute f(u) for NSAMPLES
+   * different values of u. You MUST draw each interpolated control
+   * point EXACTLY ONCE, not more, not less.
+  */
+
+  return;
+}
+
+
+void
+draw_quadratic_endpieces(void)
+{
+  glColor3f(1.0, 0.5, 0.0);
+  glLineWidth(5.0);
+
+  /* YOUR CODE HERE TASK 2
+   *
+   * Adapt your Catmull-Rom spline code to draw a quadratic spline
+   * between the first and second control points that interpolates
+   * both control points.  Then draw another quadratic spline between
+   * the penultimate and last control points that also interpolates
+   * both control points.  Both of these quadratic curves must have
+   * the same tangent as the cubic Catmull-Rom spline where they meet
+   * the Catmull-Rom spline.
+   *
+   * NOTE: the inverse function provided in xmat.h doesn't seem to
+   * work correctly with the constraint matrix for the spline
+   * interpolating the last two control points.  You'd need to 
+   * invert this matrix by hand.  (If you managed to write or 
+   * find a working inverse function, let me know!)
+  */
+
+  return;
+}
+
+void
+draw_cubic_bezier(void)
+{
+
+  /* YOUR CODE HERE TASK 3
+   *
+   * Manually populate B with the cubic Bezier basis matrix.
+  */
+
+  glColor3f(0.0, 1.0, 0.0);
+  glLineWidth(5.0);
+
+  /* YOUR CODE HERE TASK 3
+   *
+   * Draw a cubic Bezier spline that interpolates the two end control
+   * points.  Calculate the coefficients of the spline for control
+   * point-sets {0, 1, 2, 3} and {3, 4, 5, 6}. Then samples the spline
+   * at NSAMPLES location on the spline, i.e., compute f(u) for
+   * NSAMPLES different values of u. You MUST draw each interpolted
+   * control point EXACTLY ONCE, not more, not less.  You MUST use
+   * cspline_coeffs() and cspline_eval() and you may consult
+   * draw_catmull_rom().
+  */
+
+  return;
+}
+
