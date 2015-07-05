@@ -391,7 +391,44 @@ fbo_accum_init()
    * Be sure to check that your framebuffer status is 
    * GL_FRAMEBUFFER_COMPLETE.
    */
+  glGenFramebuffers(1, &fbod);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbod);
+  glGenTextures(1, &tbod);
+  glBindTexture(GL_TEXTURE_2D, tbod);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                 width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,
+                         GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tbod, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    
+  // width height are the same, so it's not neccessary to clamp?
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
+    // glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+  // generate renderbuffer
+  glGenRenderbuffers(2, rbod);
+  // 
+  glBindRenderbuffer(GL_RENDERBUFFER, rbod[0]);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB32F, width, height);
+  glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER,
+                            GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER,
+                            rbod[0]);
+  // generate renderbuffer for stencil buffer
+
+  glBindRenderbuffer(GL_RENDERBUFFER, rbod[1]);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, width, height);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                            GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
+                            rbod[1]);
+  if ((gl_error = glCheckFramebufferStatus(GL_FRAMEBUFFER)) !=
+      GL_FRAMEBUFFER_COMPLETE) {
+      cerr << "Framebuffer incomplete [0x" << hex << gl_error << "] "
+      << glGetString(gl_error) << endl;
+      exit(-1);
+  }
   // clear accumulation buffer
   glDrawBuffer(GL_COLOR_ATTACHMENT1);
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -457,13 +494,20 @@ fbo_accum(float weight)
    * onto the accumulation buffer, using
    * argument "weight".
    */
-  
+  glEnable(GL_BLEND);
+  glBlendColor(0.0, 0.0, 0.0, weight);
+  glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE);
+  glBlendEquation(GL_FUNC_ADD);
+
   /* TASK 4: YOUR CODE HERE
    *
    * Draw the quad above, textured with the image
    * in GL_COLOR_ATTACHMENT0, onto the
    * accumulation buffer
    */
+  glDrawBuffer(GL_COLOR_ATTACHMENT1);
+  glEnable(GL_TEXTURE_2D);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // restore states
   glDrawBuffer(GL_COLOR_ATTACHMENT0);   
@@ -486,7 +530,14 @@ fbo_accum_return(GLuint fbod)
    * Call glBlitFramebuffer().
    * Bind the default fbo to GL_FRAMEBUFFER and display.
    */
-
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, fbod);
+  glReadBuffer(GL_COLOR_ATTACHMENT1);
+  
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  glBlitFramebuffer(0, 0, width, height,
+                    0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+  
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   return;
 }
 float frand(float min = -1.0f, float max = 1.0f) {
@@ -527,22 +578,35 @@ display()
      * buffer calls, so you should be able to replace them with a
      * one-to-one mapping.)
     */
-    glClear(GL_ACCUM_BUFFER_BIT);
+    // With accumulation buffer 
+    // glClear(GL_ACCUM_BUFFER_BIT);
+    // for (int i = 0; i < numJitters; ++i)
+    // {
+    //   // render 
+      
+    //   XVec3f displacement(frand(), frand(), frand());
+    //   displacement *= jitterAmount;
+    //   lightPos[0] = lightPos0[0] + displacement.x();
+    //   lightPos[1] = lightPos0[1] + displacement.y();
+    //   lightPos[2] = lightPos0[2] + displacement.z();
+    //   drawScene(); // don't forget to call drawScene() for each jittered light position
+    //   glAccum(GL_ACCUM, 1.0/(float)numJitters);
+    // }
+    // glAccum(GL_RETURN, 1.0);
+    
+    // With FBO 
+    GLint fbod = fbo_accum_init();
     for (int i = 0; i < numJitters; ++i)
     {
-      // render 
-      
       XVec3f displacement(frand(), frand(), frand());
       displacement *= jitterAmount;
       lightPos[0] = lightPos0[0] + displacement.x();
       lightPos[1] = lightPos0[1] + displacement.y();
       lightPos[2] = lightPos0[2] + displacement.z();
       drawScene(); // don't forget to call drawScene() for each jittered light position
-      glAccum(GL_ACCUM, 1.0/(float)numJitters);
+      fbo_accum(1.0/(float)numJitters);
     }
-    glAccum(GL_RETURN, 1.0);
-    
-
+    fbo_accum_return(fbod);
   } else {
     /* for hard shadows, just draw the scene */
     /* clear the buffers */
