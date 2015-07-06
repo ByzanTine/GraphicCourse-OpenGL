@@ -78,7 +78,17 @@ cspline_coeffs(XVec2f a[NCUBIC], /* result coefficients */
    * Given 4 control points p[0]...p[3], calculate the coefficients a[0]...a[3]
    * of the cubic spline interpolating the control points.
   */
-
+  // it's so convoluted to calculate this
+  XVec4f px(p[0].x(), p[1].x(), p[2].x(), p[3].x());
+  XVec4f py(p[0].y(), p[1].y(), p[2].y(), p[3].y());
+  // mutiple each vector with B matrix
+  XVec4f ax = B * px;
+  XVec4f ay = B * py;
+  for (int i = 0; i < NCUBIC; ++i)
+  {
+    a[i].x() = ax[i];
+    a[i].y() = ay[i];
+  }
   return;
 }
 
@@ -92,7 +102,7 @@ cspline_eval(XVec2f &f,  /* result function */
    * Evaluate the cubic spline at the given parameter u,
    * given the coefficients of the spline.
   */
-
+  f = a[0] + u * a[1] + u * u * a[2] + u * u * u * a[3];
   return;
 }
 
@@ -100,19 +110,22 @@ void
 draw_catmull_rom(void)
 {
   XMat4f C, B;
-  XVec2f a[NCUBIC], p;
+  XVec2f a[NCUBIC], p[NCUBIC];
 
   /* YOUR CODE HERE TASK 1
    *
    * Manually populate C with the Catmull-Rom constraint matrix
   */
-
+  C.setRow(0, XVec4f(1, -1, 1, 1));
+  C.setRow(1, XVec4f(1,  0, 0, 0));
+  C.setRow(2, XVec4f(1,  1, 1, 1));
+  C.setRow(3, XVec4f(1,  2, 4, 6));
   /* YOUR CODE HERE TASK 1
    *
    * Compute B, the Catmull-Rom basis matrix, from C.
    * You MUST use C and not fill in the matrix manually.
   */
-
+  B = C.inverse();
   glColor3f(0.0, 0.0, 1.0);
   glLineWidth(5.0);
 
@@ -126,7 +139,23 @@ draw_catmull_rom(void)
    * different values of u. You MUST draw each interpolated control
    * point EXACTLY ONCE, not more, not less.
   */
+  glBegin(GL_LINE_STRIP);
+  XVec2f vertex;
+  for (int i = 1; i < NUM_POINTS - 2; i++) {
+    p[0] = points[i-1];
+    p[1] = points[i];
+    p[2] = points[i+1];
+    p[3] = points[i+2];
 
+    cspline_coeffs(a, B, p);
+    for (int i = 0; i < NSAMPLES; i++)
+    {
+      cspline_eval(vertex, (float)i/NSAMPLES, a);
+      // std::cout << vertex << std::endl;
+      glVertex2fv(vertex);
+    }
+  }
+  glEnd();
   return;
 }
 
