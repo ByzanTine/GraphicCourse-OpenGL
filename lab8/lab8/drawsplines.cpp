@@ -165,6 +165,7 @@ draw_quadratic_endpieces(void)
 {
   glColor3f(1.0, 0.5, 0.0);
   glLineWidth(5.0);
+  
 
   /* YOUR CODE HERE TASK 2
    *
@@ -182,7 +183,70 @@ draw_quadratic_endpieces(void)
    * invert this matrix by hand.  (If you managed to write or 
    * find a working inverse function, let me know!)
   */
+  // TODO this quad curve is hard to design a good shape curve without 
+  // breaking the tangent at the middle point 
+  // So this is a simple approximation of p0 = f(0), p1 = f(0.5), p2 = f(1)
+  XMat3f C, B;
+  C.setRow(0, XVec4f(1, 0, 0));
+  C.setRow(1, XVec4f(1, 0.5, 0.25));
+  C.setRow(2, XVec4f(1, 1, 1));
+  B = C.inverse();
 
+  XVec2f a[NQUADRATIC], p[NQUADRATIC];
+  // draw the two first point
+  {
+    p[0] = points[0];
+    p[1] = points[1];
+    p[2] = points[2];
+    // now calculate a 
+    XVec3f px(p[0].x(), p[1].x(), p[2].x());
+    XVec3f py(p[0].y(), p[1].y(), p[2].y());
+    // mutiple each vector with B matrix
+    XVec3f ax = B * px;
+    XVec3f ay = B * py;
+    for (int i = 0; i < NQUADRATIC; ++i)
+    {
+      a[i].x() = ax[i];
+      a[i].y() = ay[i];
+    }
+    // draw the line
+    glBegin(GL_LINE_STRIP);
+    for (int i = 0; i < NSAMPLES; i++)
+    {
+      float u = (float)i/NSAMPLES/2;
+      XVec2f vertex = a[0] + u * a[1] + u * u * a[2];
+      // std::cout << vertex << std::endl;
+      glVertex2fv(vertex);
+    }
+    glEnd();
+  }
+  // draw the two last point 
+  {
+    p[0] = points[NUM_POINTS - 3];
+    p[1] = points[NUM_POINTS - 2];
+    p[2] = points[NUM_POINTS - 1];
+    // now calculate a 
+    XVec3f px(p[0].x(), p[1].x(), p[2].x());
+    XVec3f py(p[0].y(), p[1].y(), p[2].y());
+    // mutiple each vector with B matrix
+    XVec3f ax = B * px;
+    XVec3f ay = B * py;
+    for (int i = 0; i < NQUADRATIC; ++i)
+    {
+      a[i].x() = ax[i];
+      a[i].y() = ay[i];
+    }
+    // draw the line
+    glBegin(GL_LINE_STRIP);
+    for (int i = 0; i < NSAMPLES; i++)
+    {
+      float u = 0.5f + (float)i/NSAMPLES/2;
+      XVec2f vertex = a[0] + u * a[1] + u * u * a[2];
+      // std::cout << vertex << std::endl;
+      glVertex2fv(vertex);
+    }
+    glEnd();
+  }
   return;
 }
 
