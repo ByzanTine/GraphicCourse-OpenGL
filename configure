@@ -6,5 +6,6 @@ make -C lab5/lab5
 make -C lab6/lab6
 make -C lab7/lab7
 make -C lab8/lab8
+make -C lab9/lab9
 make -C pa2/pa2
 make -C pa3/pa3
