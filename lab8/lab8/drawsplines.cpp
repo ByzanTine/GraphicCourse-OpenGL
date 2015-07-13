@@ -258,7 +258,8 @@ draw_cubic_bezier(void)
    *
    * Manually populate B with the cubic Bezier basis matrix.
   */
-
+  XMat4f C, B;
+  XVec2f a[NCUBIC], p[NCUBIC];
   glColor3f(0.0, 1.0, 0.0);
   glLineWidth(5.0);
 
@@ -273,7 +274,46 @@ draw_cubic_bezier(void)
    * cspline_coeffs() and cspline_eval() and you may consult
    * draw_catmull_rom().
   */
+  B.setRow(0, XVec4f( 1,  0,  0, 0));
+  B.setRow(1, XVec4f(-3,  3,  0, 0));
+  B.setRow(2, XVec4f( 3, -6,  3, 0));
+  B.setRow(3, XVec4f(-1,  3, -3, 1));
 
+  glBegin(GL_LINE_STRIP);
+  XVec2f vertex;
+  {
+    p[0] = points[0];
+    p[1] = points[1];
+    p[2] = points[2];
+    p[3] = points[3];
+
+    cspline_coeffs(a, B, p);
+    for (int i = 0; i < NSAMPLES; i++)
+    {
+      // TODO NSAMPLES should be larger than 2
+      cspline_eval(vertex, (float)i/(NSAMPLES-1), a);
+      // std::cout << vertex << std::endl;
+      glVertex2fv(vertex);
+    }
+  }
+  glEnd();
+  glBegin(GL_LINE_STRIP);
+  {
+    p[0] = points[3];
+    p[1] = points[4];
+    p[2] = points[5];
+    p[3] = points[6];
+
+    cspline_coeffs(a, B, p);
+    for (int i = 0; i < NSAMPLES; i++)
+    {
+      // TODO NSAMPLES should be larger than 2
+      cspline_eval(vertex, (float)i/(NSAMPLES-1), a);
+      // std::cout << vertex << std::endl;
+      glVertex2fv(vertex);
+    }
+  }
+  glEnd();
   return;
 }
 
