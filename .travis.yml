@@ -4,6 +4,6 @@ compiler:
   - clang
 sudo: required
 before_install:
-  - sudo apt-get install freeglut3-dev libglew-dev 
+  - sudo apt-get install freeglut3-dev libglew-dev libpng12-dev 
 # Change this to your needs
 script: ./configure 

@@ -9,3 +9,4 @@ make -C lab8/lab8
 make -C lab9/lab9
 make -C pa2/pa2
 make -C pa3/pa3
+make -C pa4/pa4
