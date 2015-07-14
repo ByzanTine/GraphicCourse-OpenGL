@@ -148,11 +148,11 @@ void Mesh::subdivide()
 			
 			// TASK 0 //
 			// currently the new edge center is the average of the endpoints
-			// change it to be the average of the two endpoints and the cneters
+			// change it to be the average of the two endpoints and the centers
 			// of the two faces containing the edge. all of what you need is
 			// already prepared, but you should look around and see how it is done
-			Vertex edgeCenter = averageVertices(_vertices[_quads[i](j)],_vertices[_quads[i](k)]);
-
+			// Vertex edgeCenter = averageVertices(_vertices[_quads[i](j)],_vertices[_quads[i](k)]);
+			Vertex edgeCenter = averageVertices(_vertices[_quads[i](j)],_vertices[_quads[i](k)], faceCenter, otherFaceCenter);
 			// add the new averaged edge center to the mesh
 			newVertices.push_back(edgeCenter);
 			
@@ -405,7 +405,16 @@ Mesh::averageFacesAroundVertex(unsigned int vertex)
  // TASK 2 //
  // set result to be the average of the face centers
  // of all of the faces that were found
-	
+	for (size_t i = 0; i < count; ++i)
+	{
+		Vertex coq = centerOfQuad(faces[i]);
+		result.position += coq.position;
+		result.normal += coq.normal;
+		result.color += coq.color;
+	}
+	result.position /= count;
+	result.normal /= count;
+	result.color /= count;
 	return result;
 }
 
@@ -431,7 +440,16 @@ Mesh::averageEdgesAroundVertex(unsigned int vertex)
 	// set result to be the average of the midpoints of
 	// all of the edges that were found.
 	// the buffer will NOT contain duplicate edges
-
+	for (size_t i = 0; i < count; ++i)
+	{
+		Vertex avgEdge = averageVertices(_vertices[edges[2*i]], _vertices[edges[2*i+1]]);
+		result.position += avgEdge.position;
+		result.normal += avgEdge.normal;
+		result.color += avgEdge.color;
+	}
+	result.position /= count;
+	result.normal /= count;
+	result.color /= count;
 	return result;
 }
 
@@ -478,15 +496,21 @@ Mesh::newVertexForSmooth(unsigned int vertex)
 	// the new vertex
 	// TASK 1 //
 	// set result to be the average of the face centers
- 
+ 	// Vertex result = averageFaces;
 	// TASK 3 //
 	// set result to be the average of the edge midpoints
- 
+  Vertex result = averageEdges;
 	// TASK 5 //
 	// set result to be a weighted combination of averageFaces,
 	// averageEdges, and oldVertex. You will have to set the
 	// position, normal, and color separately.
-	Vertex result = oldVertex;
+	// Vertex result = oldVertex;
+	result.position = ((averageFaces.position + 2.0 * averageEdges.position)
+                       + (count - 3) * oldVertex.position) / count;
+  result.normal  = ((averageFaces.normal + 2.0 * averageEdges.normal)
+                      + (count - 3) * oldVertex.normal) / count;
+  result.color  = ((averageFaces.color + 2.0 * averageEdges.color)
+                     + (count - 3) * oldVertex.color) / count;
 
 	return result;
 }
