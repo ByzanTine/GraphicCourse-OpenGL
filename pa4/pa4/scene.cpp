@@ -415,12 +415,17 @@ X3Cylinder::Render() const
    */
   const int N = 20;
   const float step = 2.0f * M_PI / N;
-
   if (top_) {
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0.0f, 1.0f, 0.0f);
+    // text coord 
+    glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, 0.5f*height_, 0.0f);
+    
     for (int k = 0; k < N+1; ++k) {
+      // text coord
+      // Texcoord need to be placed ahead of vertex3f
+      glTexCoord2f(0.5 - 0.5 * sin(k*step), 0.5 + 0.5 * cos(k*step));
       glVertex3f(-radius_*sin(k*step), 0.5f*height_, -radius_*cos(k*step));
     }
     glEnd();
@@ -430,9 +435,13 @@ X3Cylinder::Render() const
     glFrontFace(GL_CW);
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0.0f, -1.0f, 0.0f);
+    glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, -0.5f*height_, 0.0f);
+    
     for (int k = 0; k < N+1; ++k) {
+      glTexCoord2f(0.5 - 0.5 * sin(k*step), 0.5 - 0.5 * cos(k*step));
       glVertex3f(-radius_*sin(k*step), -0.5f*height_, -radius_*cos(k*step));
+      
     }
     glEnd();
     glFrontFace(GL_CCW);
@@ -442,7 +451,9 @@ X3Cylinder::Render() const
     glBegin(GL_QUAD_STRIP);
     for (int k = 0; k < N+1; ++k) {
       glNormal3f(-sin(k*step), 0.0f, -cos(k*step));
+      glTexCoord2f((float)k / N, 1.0f);
       glVertex3f(-radius_*sin(k*step), 0.5f*height_, -radius_*cos(k*step));
+      glTexCoord2f((float)k / N, 0.0f);
       glVertex3f(-radius_*sin(k*step), -0.5f*height_, -radius_*cos(k*step));
     }
     glEnd();
@@ -600,6 +611,39 @@ X3ImageTexture::SetupTexture(const Image* image)
    * for Image and X3ImageTexture. Modulate the texture with existing 
    * color instead of replacing it.
   */
+  glGenTextures(1, &texture_handle_);
+  glBindTexture(GL_TEXTURE_2D, texture_handle_);
+
+  // initiate mipmap and adjust filter
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 30);
+  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeat_s_ ? GL_REPEAT : GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeat_t_ ? GL_REPEAT : GL_CLAMP);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+
+  if (image->hasAlpha()) 
+  {
+    assert(0);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->width(), image->height()
+    //              ,0, GL_RGBA, GL_UNSIGNED_BYTE, image->get_pixels());
+
+    // glEnable(GL_ALPHA_TEST);
+    // glEnable(GL_BLEND);
+
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  }
+  else
+  {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width(), image->height()
+                 ,0, GL_RGB, GL_UNSIGNED_BYTE, image->get_pixels());
+  }
 }
 
 X3IndexedFaceSet::X3IndexedFaceSet(const char** atts) 
