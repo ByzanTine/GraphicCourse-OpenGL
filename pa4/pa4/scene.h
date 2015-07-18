@@ -662,6 +662,8 @@ class X3ScalarInterpolator: public X3InterpolatorNode {
   float LinearInterpolation(float time);
   float SmoothInterpolation(float time);
  private:
+  XVec<1, float> cat_mull_interpolate(float time, int index);
+ private:
   std::vector<float> keyValue_;
 };
 
@@ -681,6 +683,8 @@ class X3PositionInterpolator: public X3InterpolatorNode {
  private:
   XVec3f LinearInterpolation(float time);
   XVec3f SmoothInterpolation(float time);
+ private:
+  XVec3f cat_mull_interpolate(float time, int index);
  private:
   std::vector<XVec3f> keyValue_;
 };

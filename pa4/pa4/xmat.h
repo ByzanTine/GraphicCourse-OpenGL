@@ -247,6 +247,12 @@ template<int dim, class real_type>
     for(int i=0; i<dim && i<cDim; ++i)
       m_v[dim*c+i] = v(i);
   }
+  template<class cRealType>
+    void setCol(const int c, const cRealType &v)
+  {
+    assert(c<dim && c>=0);
+    m_v[dim*c] = v;
+  }
         
   template<int cDim, class cRealType>
     void setRow(const int r, const XVec<cDim, cRealType> &v)
@@ -255,6 +261,12 @@ template<int dim, class real_type>
 
     for(int i=0; i<dim && i<cDim; ++i)
       m_v[dim*i+r] = v(i);
+  }
+  template<class cRealType>
+    void setRow(const int r, const cRealType &v)
+  {
+    assert(r<dim && r>=0);
+    m_v[r] = v;
   }
         
   XMat transpose() const

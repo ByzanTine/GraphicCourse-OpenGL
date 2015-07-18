@@ -1509,6 +1509,63 @@ X3ScalarInterpolator::LinearInterpolation(float time)
   return (1.0 - t) * keyValue_[index] + t * keyValue_[index+1];
 }
 
+template<class T>
+inline void
+cspline_coeffs(T a[4], /* result coefficients */
+               XMat4f B, /* spline's basis matrix */
+               T p[4] /* control points */)
+{
+  memset((char *) a, 0, 4*sizeof(T));
+
+
+  XMat4f pmat(0.0f);
+  pmat.setRow(0, p[0]);
+  pmat.setRow(1, p[1]);
+  pmat.setRow(2, p[2]);
+  pmat.setRow(3, p[3]);
+  XMat4f a_mid = B * pmat;
+  for (int i = 0; i < 4; ++i)
+  {
+    a[i] = a_mid.row(i);
+  }
+  return;
+}
+
+// T should be float, Xvec2f,3f,4f 
+template<class T>
+inline void
+cspline_eval(T &f,  /* result function */
+             float u,    /* spline parameter, 0 <= u <= 1 */
+             T a[4] /* coefficients */)
+{
+
+  f = a[0] + u * a[1] + u * u * a[2] + u * u * u * a[3];
+  return;
+}
+
+XVec<1,float> 
+X3ScalarInterpolator::cat_mull_interpolate(float time, int index) {
+  assert(index >= 1);
+  XMat4f C, B;
+  C.setRow(0, XVec4f(1, -1, 1, 1));
+  C.setRow(1, XVec4f(1,  0, 0, 0));
+  C.setRow(2, XVec4f(1,  1, 1, 1));
+  C.setRow(3, XVec4f(1,  2, 4, 6));
+  B = C.inverse();
+
+
+  XVec<1,float> verts[4];
+  XVec<1,float> a[4];
+  verts[0] = keyValue_[index - 1];
+  verts[1] = keyValue_[index];
+  verts[2] = keyValue_[index + 1];
+  verts[3] = keyValue_[index + 2];
+  cspline_coeffs(a, B, verts);
+  float u = (time - key()[index])/(key()[index+1] - key()[index]);
+  XVec<1,float> result;
+  cspline_eval(result, u, a);
+  return result;
+}
 
 float
 X3ScalarInterpolator::SmoothInterpolation(float time)
@@ -1525,7 +1582,29 @@ X3ScalarInterpolator::SmoothInterpolation(float time)
    * Make sure you handle the border cases at the two end points.
    * You may consult or adapt your code from Lab8.
   */
+  if (index < 0) {
+    return keyValue_[0];
+  } 
+  if (index >= (int)keyValue_.size()-1) {
+    return keyValue_.back();
+  }
+        
+  // if index = 0; need to interpolate with quadtratic curve
+  if (index == 0) {
 
+  }
+  // if index = (int)keyValue_.size()- 2, same quad
+  else if (index ==  (int)keyValue_.size()- 2) {
+
+  }
+  // else use cat-mull
+  else {
+    
+    return cat_mull_interpolate(time, index).x();
+  }
+
+  float t = (time - key()[index])/(key()[index+1] - key()[index]);
+  return (1.0 - t) * keyValue_[index] + t * keyValue_[index+1];
   return keyValue_[0];
 }
 
@@ -1588,6 +1667,30 @@ X3PositionInterpolator::LinearInterpolation(float time)
 }
 
 
+
+XVec3f 
+X3PositionInterpolator::cat_mull_interpolate(float time, int index) {
+  assert(index >= 1);
+  XMat4f C, B;
+  C.setRow(0, XVec4f(1, -1, 1, 1));
+  C.setRow(1, XVec4f(1,  0, 0, 0));
+  C.setRow(2, XVec4f(1,  1, 1, 1));
+  C.setRow(3, XVec4f(1,  2, 4, 6));
+  B = C.inverse();
+
+
+  XVec3f verts[4];
+  XVec3f a[4];
+  verts[0] = keyValue_[index - 1];
+  verts[1] = keyValue_[index];
+  verts[2] = keyValue_[index + 1];
+  verts[3] = keyValue_[index + 2];
+  cspline_coeffs(a, B, verts);
+  float u = (time - key()[index])/(key()[index+1] - key()[index]);
+  XVec3f result;
+  cspline_eval(result, u, a);
+  return result;
+}
 XVec3f
 X3PositionInterpolator::SmoothInterpolation(float time)
 {
@@ -1621,20 +1724,8 @@ X3PositionInterpolator::SmoothInterpolation(float time)
   }
   // else use cat-mull
   else {
-    assert(index >= 1);
-    XMat4f C, B;
-    C.setRow(0, XVec4f(1, -1, 1, 1));
-    C.setRow(1, XVec4f(1,  0, 0, 0));
-    C.setRow(2, XVec4f(1,  1, 1, 1));
-    C.setRow(3, XVec4f(1,  2, 4, 6));
-    XVec3f verts[4];
-    verts[0] = keyValue_[index - 1];
-    verts[1] = keyValue_[index];
-    verts[2] = keyValue_[index + 1];
-    verts[3] = keyValue_[index + 2];
-    float u = (time - key()[index])/(key()[index+1] - key()[index]);
-    XVec4f S(1, u, pow(u,2), pow(u,3));
-
+    
+    return cat_mull_interpolate(time, index);
   }
 
   float t = (time - key()[index])/(key()[index+1] - key()[index]);

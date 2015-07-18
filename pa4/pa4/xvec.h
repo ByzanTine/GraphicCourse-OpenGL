@@ -97,12 +97,26 @@ template<int dim, class real_type>
   bool operator!=(const XVec& c) const { 
     return !((*this)==c);
   }
-        
-  XVec& operator=(const XVec& c) { 
-    for(int i=0; i<dim; ++i)
-      m_v[i] = c.m_v[i];
+  // danger TODO, lose info 
+  // HACK 
+  template<int odim, class oreal_type> 
+  XVec& operator=(const XVec<odim, oreal_type>& c) { 
+    for(int i=0; i< odim; ++i)
+      m_v[i] = c[i];
     return *this; 
   }
+  
+  template<class oreal_type> 
+  XVec& operator=(const oreal_type& c) { 
+    m_v[0] = c;
+    return *this; 
+  }
+
+  // XVec& operator=(const XVec& c) { 
+  //   for(int i=0; i<dim; ++i)
+  //     m_v[i] = c.m_v[i];
+  //   return *this; 
+  // }
         
   // Algebraic operations.
   XVec operator+(const XVec& c) const { 
