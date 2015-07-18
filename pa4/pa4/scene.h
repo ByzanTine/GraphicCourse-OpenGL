@@ -28,6 +28,7 @@
 #include <iostream>
 
 #include "xvec.h"
+#include "xmat.h"
 #include "image.h"
 
 enum X3NodeType {
@@ -233,6 +234,9 @@ rotation_t() : axis(1.0f, 0.0f, 0.0f), angle_rad(0.0f) {
 }
 rotation_t(float ax, float ay, float az, float phi) 
 : axis(ax, ay, az), angle_rad(phi) {
+}
+rotation_t(XVec3f axis_, float phi) 
+: axis(axis_), angle_rad(phi) {
 }
   XVec3f axis;
   float angle_rad;

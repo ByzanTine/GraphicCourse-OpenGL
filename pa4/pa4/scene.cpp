@@ -443,7 +443,7 @@ X3Cylinder::Render() const
       glVertex3f(-radius_*sin(k*step), -0.5f*height_, -radius_*cos(k*step));
       
     }
-    glEnd();
+    glEnd();  
     glFrontFace(GL_CCW);
   }
         
@@ -1157,6 +1157,18 @@ X3TextureTransform::Render() const
    * Don't forget to specify which OpenGL matrix stack
    * you want the matrices multiplied to.
   */
+  // Matrix that will be multiplied to the original text coord matrix
+  glMatrixMode(GL_TEXTURE);
+  glLoadIdentity();
+  glTranslatef(-center_(0), -center_(1), 0.0);
+  glScalef(scale_(0), scale_(1), 1.0);
+
+  //  rotation conter clockwisely.
+  // if center(0,0) what to do? setting z=1.0 for temperary solution here
+  glRotatef(rotation_rad_/M_PI*180, center_(0), center_(1), 1.0);
+
+  glTranslatef(center_(0), center_(1), 0.0);
+  glTranslatef(translation_(0), translation_(1), 0.0);
 }
 
 void
@@ -1427,7 +1439,17 @@ X3OrientationInterpolator::LinearInterpolation(float time)
    * separately and then put the results together into a rotation_t,
    * which you then return to the caller.
   */
-  return keyValue_[0];
+  if (index < 0) {
+    return keyValue_[0];
+  } 
+  if (index >= (int)keyValue_.size()-1) {
+    return keyValue_.back();
+  }
+        
+  float t = (time - key()[index])/(key()[index+1] - key()[index]);
+  XVec3f axis_i = (1.0 - t) * keyValue_[index].axis + t * keyValue_[index+1].axis;
+  float angle_i = (1.0 - t) * keyValue_[index].angle_rad + t * keyValue_[index+1].angle_rad;
+  return rotation_t(axis_i, angle_i);
 }
 
 X3ScalarInterpolator::X3ScalarInterpolator(const char** atts) 
@@ -1503,6 +1525,7 @@ X3ScalarInterpolator::SmoothInterpolation(float time)
    * Make sure you handle the border cases at the two end points.
    * You may consult or adapt your code from Lab8.
   */
+
   return keyValue_[0];
 }
 
@@ -1569,6 +1592,7 @@ XVec3f
 X3PositionInterpolator::SmoothInterpolation(float time)
 {
   assert(keyValue_.size()==key().size());
+  assert(key().size() >= 3); // 3 for quad interploate, else do linear
   // first locate the interval with binary search
   int index = FindKeyInterval(time);
         
@@ -1579,6 +1603,42 @@ X3PositionInterpolator::SmoothInterpolation(float time)
    * smooth interpolation code for scalar values
    * here, almost verbatim.
   */
+
+  if (index < 0) {
+    return keyValue_[0];
+  } 
+  if (index >= (int)keyValue_.size()-1) {
+    return keyValue_.back();
+  }
+        
+  // if index = 0; need to interpolate with quadtratic curve
+  if (index == 0) {
+
+  }
+  // if index = (int)keyValue_.size()- 2, same quad
+  else if (index ==  (int)keyValue_.size()- 2) {
+
+  }
+  // else use cat-mull
+  else {
+    assert(index >= 1);
+    XMat4f C, B;
+    C.setRow(0, XVec4f(1, -1, 1, 1));
+    C.setRow(1, XVec4f(1,  0, 0, 0));
+    C.setRow(2, XVec4f(1,  1, 1, 1));
+    C.setRow(3, XVec4f(1,  2, 4, 6));
+    XVec3f verts[4];
+    verts[0] = keyValue_[index - 1];
+    verts[1] = keyValue_[index];
+    verts[2] = keyValue_[index + 1];
+    verts[3] = keyValue_[index + 2];
+    float u = (time - key()[index])/(key()[index+1] - key()[index]);
+    XVec4f S(1, u, pow(u,2), pow(u,3));
+
+  }
+
+  float t = (time - key()[index])/(key()[index+1] - key()[index]);
+  return (1.0 - t) * keyValue_[index] + t * keyValue_[index+1];
   return keyValue_[0];
 }
 

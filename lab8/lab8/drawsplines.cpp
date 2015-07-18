@@ -79,15 +79,28 @@ cspline_coeffs(XVec2f a[NCUBIC], /* result coefficients */
    * of the cubic spline interpolating the control points.
   */
   // it's so convoluted to calculate this
-  XVec4f px(p[0].x(), p[1].x(), p[2].x(), p[3].x());
-  XVec4f py(p[0].y(), p[1].y(), p[2].y(), p[3].y());
-  // mutiple each vector with B matrix
-  XVec4f ax = B * px;
-  XVec4f ay = B * py;
+  // XVec4f px(p[0].x(), p[1].x(), p[2].x(), p[3].x());
+  // XVec4f py(p[0].y(), p[1].y(), p[2].y(), p[3].y());
+  // // mutiple each vector with B matrix
+  // XVec4f ax = B * px;
+  // XVec4f ay = B * py;
+  // for (int i = 0; i < NCUBIC; ++i)
+  // {
+  //   a[i].x() = ax[i];
+  //   a[i].y() = ay[i];
+  // }
+  // std::cout << ax << "\n" << ay << std::endl;
+  XMat4f pmat(0.0f);
+  pmat.setRow(0, p[0]);
+  pmat.setRow(1, p[1]);
+  pmat.setRow(2, p[2]);
+  pmat.setRow(3, p[3]);
+  XMat4f a_mid = B * pmat;
+  // std::cout << "a_mid\n" << a_mid << std::endl;
   for (int i = 0; i < NCUBIC; ++i)
   {
-    a[i].x() = ax[i];
-    a[i].y() = ay[i];
+    a[i].x() = a_mid(i, 0);
+    a[i].y() = a_mid(i, 1);
   }
   return;
 }
