@@ -25,7 +25,7 @@ Learn essential components in computer graphics if you are interested.
 | :---------------: | 
 | ![lin-badge]      | 
 
-[lin-badge]: https://travis-ci.org/ByzanTine/GraphicCourse-OpenGL.svg?token=gzmzJHRhNY5i7jbRN3D5&branch=master "Travis build status"
+[lin-badge]: https://travis-ci.org/ByzanTine/GraphicCourse-OpenGL.svg?branch=master "Travis build status"
 [lin-link]:  https://travis-ci.org/ByzanTine/GraphicCourse-OpenGL "Travis build status"
 
 
